@@ -1,0 +1,106 @@
+/* Landing / Login styles */
+
+.landing-root {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 2rem;
+}
+
+.brand-logo {
+  width: 140px;
+  height: auto;
+}
+
+.center-card {
+  width: 420px;
+  max-width: calc(100% - 48px);
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.logo-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.brand-name {
+  font-family: 'Poppins', sans-serif;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--text);
+  margin: 0;
+  font-size: 28px;
+}
+.brand-name span { font-weight:600; }
+
+.login-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-items: stretch;
+}
+
+.field { display: flex; flex-direction: column; gap: 8px; }
+.label-text { font-weight: 500; color: var(--text); }
+
+.input {
+  width: 100%;
+  height: 46px;
+  border-radius: 22px;
+  border: 2px solid #0f0f0f22;
+  padding: 0 16px;
+  font-size: 16px;
+  background: #fff;
+  outline: none;
+}
+.input:focus { box-shadow: 0 0 0 4px rgba(47,122,79,0.08); border-color: rgba(47,122,79,0.4); }
+
+.password-wrap { position: relative; display: flex; align-items: center; }
+.eye-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  padding: 6px 8px;
+  cursor: pointer;
+}
+
+.primary-btn {
+  margin-top: 8px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  height: 56px;
+  border-radius: 28px;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.links { text-align: center; margin-top: 12px; display:flex; flex-direction:column; gap:6px; }
+.links a { color: #000; text-decoration: underline; font-weight:500; }
+.links .signup { font-weight:700; }
+
+.leaf { position: absolute; width: 220px; opacity: 0.9; filter: saturate(0.6); }
+.leaf.top-left { left: -40px; top: -40px; transform: rotate(-20deg); }
+.leaf.bottom-right { right: -40px; bottom: -40px; transform: rotate(20deg); }
+
+@media (max-width: 480px) {
+  .center-card { width: 100%; max-width: 360px; }
+  .brand-logo { width: 120px; }
+  .leaf { width: 140px; }
+  .primary-btn { height: 48px; font-size: 18px; }
+}
+

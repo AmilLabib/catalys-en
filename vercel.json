@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/anthropic/:path*",
+      "destination": "https://ai.olagon.site/:path*"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
+    }
+  ]
+}
