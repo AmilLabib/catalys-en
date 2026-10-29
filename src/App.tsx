@@ -3,23 +3,23 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import MainLayout from "./layouts/MainLayout";
 import Financial from "./pages/Financial";
-import Jurnal from "./pages/Jurnal";
+import Journal from "./pages/Journal";
 import ChartOfAccounts from "./pages/ChartOfAccounts";
 import { ChartOfAccountsProvider } from "./context/ChartOfAccountsContext";
 import { InventoryProvider } from "./context/InventoryContext";
-import { BahanBakuProvider } from "./context/BahanBakuContext";
+import { RawMaterialProvider } from "./context/RawMaterialContext";
 import { JournalProvider } from "./context/JournalContext";
 import { AccountProvider } from "./context/AccountContext";
 import { ToastProvider } from "./context/ToastContext";
 import FeatureGate from "./components/FeatureGate";
 import InternalManagement from "./pages/InternalManagement";
 import DataDriven from "./pages/DataDriven";
-import UmkmBerkembang from "./pages/UmkmBerkembang";
-import Permodalan from "./pages/Permodalan";
-import Profil from "./pages/Profil";
-import Konsultasi from "./pages/Konsultasi";
+import MsmeGrowth from "./pages/MsmeGrowth";
+import Funding from "./pages/Funding";
+import Profile from "./pages/Profile";
+import Consultation from "./pages/Consultation";
 import SmartPricing from "./components/SmartPricing";
-import Kasir from "./pages/Kasir";
+import Cashier from "./pages/Cashier";
 import { BusinessSectorProvider } from "./context/BusinessSectorContext";
 import type { FeatureKey } from "./config/access";
 
@@ -34,28 +34,28 @@ export default function App() {
         <ChartOfAccountsProvider>
           <BusinessSectorProvider>
             <InventoryProvider>
-              <BahanBakuProvider>
+              <RawMaterialProvider>
               <JournalProvider>
                 <Routes>
                   <Route path="/" element={<Login />} />
                   <Route element={<MainLayout />}>
                     <Route path="/dashboard" element={<Dashboard />} />
-                    <Route path="/financial" element={gated("laporanKeuangan", <Financial />)} />
-                    <Route path="/jurnal" element={gated("jurnal", <Jurnal />)} />
-                    <Route path="/chart-of-accounts" element={gated("baganAkun", <ChartOfAccounts />)} />
-                    <Route path="/internal-management" element={gated("manajemenInternal", <InternalManagement />)} />
+                    <Route path="/financial" element={gated("financialReports", <Financial />)} />
+                    <Route path="/journal" element={gated("journal", <Journal />)} />
+                    <Route path="/chart-of-accounts" element={gated("chartOfAccounts", <ChartOfAccounts />)} />
+                    <Route path="/internal-management" element={gated("internalManagement", <InternalManagement />)} />
                     <Route path="/data-driven" element={gated("audit", <DataDriven />)} />
-                    <Route path="/umkm-berkembang" element={gated("umkmBerkembang", <UmkmBerkembang />)} />
-                    <Route path="/permodalan" element={gated("permodalan", <Permodalan />)} />
-                    <Route path="/konsultasi" element={gated("konsultasi", <Konsultasi />)} />
-                    <Route path="/profil" element={<Profil />} />
-                    <Route path="/subscription" element={<Navigate to="/profil?tab=paket" replace />} />
-                    <Route path="/smart-pricing" element={gated("hargaCerdas", <SmartPricing />)} />
-                    <Route path="/kasir" element={gated("kasir", <Kasir />)} />
+                    <Route path="/msme-growth" element={gated("msmeGrowth", <MsmeGrowth />)} />
+                    <Route path="/funding" element={gated("funding", <Funding />)} />
+                    <Route path="/consultation" element={gated("consultation", <Consultation />)} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/subscription" element={<Navigate to="/profile?tab=plans" replace />} />
+                    <Route path="/smart-pricing" element={gated("smartPricing", <SmartPricing />)} />
+                    <Route path="/cashier" element={gated("cashier", <Cashier />)} />
                   </Route>
                 </Routes>
               </JournalProvider>
-              </BahanBakuProvider>
+              </RawMaterialProvider>
             </InventoryProvider>
           </BusinessSectorProvider>
         </ChartOfAccountsProvider>

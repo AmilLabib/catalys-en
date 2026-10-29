@@ -28,72 +28,72 @@ import {
   Legend,
 } from "recharts";
 import PillTabs from "../components/PillTabs";
-import AngkaBerjalan from "../components/AngkaBerjalan";
-import { useLaporan } from "../hooks/useLaporan";
+import AnimatedNumber from "../components/AnimatedNumber";
+import { useReport } from "../hooks/useReport";
 import { useInventory } from "../context/InventoryContext";
 import { useBusinessSector } from "../context/BusinessSectorContext";
-import { formatRp, formatRpSingkat, TAHUN_BERJALAN, KONSOLIDASI, LABA_RUGI } from "../data/laporan";
-import { hitungGaji, karyawanSektor, ulasanAwal, unitKerja, type Topik } from "../data/internal";
+import { formatRp, formatRpShort, CURRENT_YEAR, CONSOLIDATED, INCOME_STATEMENT } from "../data/reports";
+import { computePay, sectorEmployees, initialReviews, workUnits, type Topic } from "../data/internal";
 import { useAccount } from "../context/AccountContext";
 
-type Tingkat = "tinggi" | "sedang" | "rendah";
-type Temuan = { judul: string; detail: string; saran: string; tingkat: Tingkat };
+type Severity = "high" | "medium" | "low";
+type Finding = { title: string; detail: string; advice: string; severity: Severity };
 
-const TINGKAT: Record<Tingkat, { label: string; cls: string; icon: typeof AlertTriangle }> = {
-  tinggi: { label: "Risiko tinggi", cls: "border-red-200 bg-red-50/70 text-red-700", icon: ShieldAlert },
-  sedang: { label: "Perlu perhatian", cls: "border-amber-200 bg-amber-50/70 text-amber-700", icon: AlertTriangle },
-  rendah: { label: "Catatan", cls: "border-blue-200 bg-blue-50/70 text-blue-700", icon: Info },
+const SEVERITY: Record<Severity, { label: string; cls: string; icon: typeof AlertTriangle }> = {
+  high: { label: "High risk", cls: "border-red-200 bg-red-50/70 text-red-700", icon: ShieldAlert },
+  medium: { label: "Needs attention", cls: "border-amber-200 bg-amber-50/70 text-amber-700", icon: AlertTriangle },
+  low: { label: "Note", cls: "border-blue-200 bg-blue-50/70 text-blue-700", icon: Info },
 };
 
-const skorDari = (t: Temuan[]) =>
-  Math.max(0, 100 - t.reduce((s, x) => s + (x.tingkat === "tinggi" ? 25 : x.tingkat === "sedang" ? 12 : 4), 0));
+const scoreFrom = (f: Finding[]) =>
+  Math.max(0, 100 - f.reduce((s, x) => s + (x.severity === "high" ? 25 : x.severity === "medium" ? 12 : 4), 0));
 
-// Penjualan per jam (data kasir contoh)
-const PENJUALAN_PER_JAM = [
-  { jam: "10:00", n: 32 },
-  { jam: "11:00", n: 48 },
-  { jam: "12:00", n: 75 },
-  { jam: "13:00", n: 68 },
-  { jam: "14:00", n: 50 },
-  { jam: "15:00", n: 54 },
-  { jam: "16:00", n: 70 },
-  { jam: "17:00", n: 90 },
-  { jam: "18:00", n: 110 },
-  { jam: "19:00", n: 135 },
-  { jam: "20:00", n: 120 },
-  { jam: "21:00", n: 98 },
-  { jam: "22:00", n: 60 },
+// Sales per hour (sample cashier data)
+const SALES_PER_HOUR = [
+  { hour: "10:00", n: 32 },
+  { hour: "11:00", n: 48 },
+  { hour: "12:00", n: 75 },
+  { hour: "13:00", n: 68 },
+  { hour: "14:00", n: 50 },
+  { hour: "15:00", n: 54 },
+  { hour: "16:00", n: 70 },
+  { hour: "17:00", n: 90 },
+  { hour: "18:00", n: 110 },
+  { hour: "19:00", n: 135 },
+  { hour: "20:00", n: 120 },
+  { hour: "21:00", n: 98 },
+  { hour: "22:00", n: 60 },
 ];
 
 const TABS = [
-  { key: "keuangan", label: "Laporan Keuangan", icon: BarChart2 },
-  { key: "inventaris", label: "Persediaan", icon: Boxes },
-  { key: "penggajian", label: "Sumber Daya", icon: Wallet },
-  { key: "pemasaran", label: "Pemasaran", icon: Megaphone },
+  { key: "finance", label: "Financial Reports", icon: BarChart2 },
+  { key: "inventory", label: "Stock", icon: Boxes },
+  { key: "payroll", label: "Human Resources", icon: Wallet },
+  { key: "marketing", label: "Marketing", icon: Megaphone },
 ] as const;
 type TabKey = (typeof TABS)[number]["key"];
 
-function DaftarTemuan({ temuan }: { temuan: Temuan[] }) {
-  if (temuan.length === 0)
+function FindingList({ findings }: { findings: Finding[] }) {
+  if (findings.length === 0)
     return (
       <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-700 flex items-center gap-2">
-        <CheckCircle2 className="w-4 h-4" /> Tidak ada temuan. Area ini dalam kondisi baik.
+        <CheckCircle2 className="w-4 h-4" /> No findings. This area is in good shape.
       </div>
     );
   return (
     <ul className="space-y-3">
-      {temuan.map((t) => {
-        const T = TINGKAT[t.tingkat];
+      {findings.map((t) => {
+        const S = SEVERITY[t.severity];
         return (
-          <li key={t.judul} className={`rounded-xl border p-4 ${T.cls}`}>
+          <li key={t.title} className={`rounded-xl border p-4 ${S.cls}`}>
             <div className="flex items-center gap-2">
-              <T.icon className="w-4 h-4" />
-              <p className="font-semibold text-gray-900 text-sm">{t.judul}</p>
-              <span className="ml-auto text-[11px] font-semibold">{T.label}</span>
+              <S.icon className="w-4 h-4" />
+              <p className="font-semibold text-gray-900 text-sm">{t.title}</p>
+              <span className="ml-auto text-[11px] font-semibold">{S.label}</span>
             </div>
             <p className="text-sm text-gray-700 mt-1">{t.detail}</p>
             <p className="text-sm text-gray-900 mt-2">
-              <b>Rekomendasi:</b> {t.saran}
+              <b>Recommendation:</b> {t.advice}
             </p>
           </li>
         );
@@ -103,233 +103,233 @@ function DaftarTemuan({ temuan }: { temuan: Temuan[] }) {
 }
 
 function DataDriven() {
-  usePageTitle("Audit Berbasis Data");
+  usePageTitle("Data-Driven Audit");
   const [params, setParams] = useSearchParams();
-  const aktif: TabKey = TABS.some((t) => t.key === params.get("tab")) ? (params.get("tab") as TabKey) : "keuangan";
+  const active: TabKey = TABS.some((t) => t.key === params.get("tab")) ? (params.get("tab") as TabKey) : "finance";
 
-  const lap = useLaporan(TAHUN_BERJALAN, KONSOLIDASI);
+  const rep = useReport(CURRENT_YEAR, CONSOLIDATED);
   const { products } = useInventory();
   const { sector } = useBusinessSector();
-  const { cabangList } = useAccount();
-  const unitAudit = unitKerja(cabangList.map((c) => c.nama)).join("|");
+  const { branchList } = useAccount();
+  const auditUnits = workUnits(branchList.map((c) => c.name)).join("|");
 
-  // ---------- Keuangan ----------
-  const keuangan = useMemo(() => {
-    const b = lap.bulanan;
-    const rataBeban = b.reduce((s, x) => s + x.beban, 0) / (b.length || 1);
-    const lonjakan = b
+  // ---------- Finance ----------
+  const finance = useMemo(() => {
+    const m = rep.monthly;
+    const avgExpense = m.reduce((s, x) => s + x.expense, 0) / (m.length || 1);
+    const spike = m
       .map((x, i) => ({ ...x, i }))
-      .filter((x) => x.beban > rataBeban * 1.12)
-      .sort((a, z) => z.beban - a.beban)[0];
-    const rugi = b.filter((x) => x.laba < 0);
-    const R = lap.ringkasan;
-    const temuan: Temuan[] = [];
-    if (lonjakan) {
-      temuan.push({
-        judul: `Lonjakan beban di bulan ${lonjakan.bulan}`,
-        detail: `Beban ${formatRp(lonjakan.beban)}, ${Math.round((lonjakan.beban / rataBeban - 1) * 100)}% di atas rata-rata bulanan.`,
-        saran: "Telusuri jurnal beban bulan tersebut dan pastikan setiap pengeluaran punya bukti dan persetujuan.",
-        tingkat: lonjakan.beban > rataBeban * 1.25 ? "tinggi" : "sedang",
+      .filter((x) => x.expense > avgExpense * 1.12)
+      .sort((a, z) => z.expense - a.expense)[0];
+    const losses = m.filter((x) => x.profit < 0);
+    const S = rep.summary;
+    const findings: Finding[] = [];
+    if (spike) {
+      findings.push({
+        title: `Expense spike in ${spike.month}`,
+        detail: `Expenses of ${formatRp(spike.expense)}, ${Math.round((spike.expense / avgExpense - 1) * 100)}% above the monthly average.`,
+        advice: "Review that month's expense journals and make sure every expense has supporting documents and approval.",
+        severity: spike.expense > avgExpense * 1.25 ? "high" : "medium",
       });
     }
-    if (rugi.length > 0) {
-      temuan.push({
-        judul: `${rugi.length} bulan mencatat rugi`,
-        detail: `Bulan: ${rugi.map((x) => x.bulan).join(", ")}.`,
-        saran: "Tinjau harga jual dan beban tetap pada bulan sepi; siapkan promo musiman.",
-        tingkat: rugi.length > 2 ? "tinggi" : "sedang",
+    if (losses.length > 0) {
+      findings.push({
+        title: `${losses.length} months recorded a loss`,
+        detail: `Months: ${losses.map((x) => x.month).join(", ")}.`,
+        advice: "Review selling prices and fixed costs in slow months; prepare seasonal promotions.",
+        severity: losses.length > 2 ? "high" : "medium",
       });
     }
-    const lancar = R.totalAsetLancar / (R.totalLiabilitasPendek || 1);
-    if (lancar < 1.2) {
-      temuan.push({
-        judul: "Likuiditas ketat",
-        detail: `Rasio lancar ${lancar.toFixed(2)}x.`,
-        saran: "Percepat penagihan piutang dan tunda belanja modal yang tidak mendesak.",
-        tingkat: "tinggi",
+    const current = S.totalCurrentAssets / (S.totalCurrentLiabilities || 1);
+    if (current < 1.2) {
+      findings.push({
+        title: "Tight liquidity",
+        detail: `Current ratio ${current.toFixed(2)}x.`,
+        advice: "Speed up receivable collection and postpone non-urgent capital spending.",
+        severity: "high",
       });
     }
-    const piutangHari = ((lap.neraca.piutang || 0) / (R.totalPendapatan / lap.bulanBerjalan / 30 || 1)) | 0;
-    if (piutangHari > 25) {
-      temuan.push({
-        judul: "Umur piutang cukup panjang",
-        detail: `Rata-rata piutang tertagih dalam ±${piutangHari} hari.`,
-        saran: "Beri diskon pembayaran cepat dan kirim pengingat tagihan otomatis.",
-        tingkat: piutangHari > 45 ? "sedang" : "rendah",
+    const receivableDays = ((rep.balance.receivables || 0) / (S.totalRevenue / rep.ongoingMonth / 30 || 1)) | 0;
+    if (receivableDays > 25) {
+      findings.push({
+        title: "Receivables take fairly long to collect",
+        detail: `Receivables are collected in ±${receivableDays} days on average.`,
+        advice: "Offer early-payment discounts and send automatic invoice reminders.",
+        severity: receivableDays > 45 ? "medium" : "low",
       });
     }
-    const bebanTerbesar = LABA_RUGI.bebanUsaha
-      .map((p) => ({ label: p.label, v: lap.lr[p.key] || 0 }))
+    const largestExpense = INCOME_STATEMENT.operatingExpenses
+      .map((p) => ({ label: p.label, v: rep.is[p.key] || 0 }))
       .sort((a, z) => z.v - a.v)[0];
-    if (bebanTerbesar && bebanTerbesar.v / (R.totalPendapatan || 1) > 0.08) {
-      temuan.push({
-        judul: `${bebanTerbesar.label} mendominasi`,
-        detail: `${((bebanTerbesar.v / R.totalPendapatan) * 100).toFixed(1)}% dari pendapatan.`,
-        saran: "Bandingkan dengan standar industri dan cari peluang efisiensi.",
-        tingkat: "rendah",
+    if (largestExpense && largestExpense.v / (S.totalRevenue || 1) > 0.08) {
+      findings.push({
+        title: `${largestExpense.label} dominates`,
+        detail: `${((largestExpense.v / S.totalRevenue) * 100).toFixed(1)}% of revenue.`,
+        advice: "Compare with industry benchmarks and look for efficiency opportunities.",
+        severity: "low",
       });
     }
-    return { temuan, lonjakan };
-  }, [lap]);
+    return { findings, spike };
+  }, [rep]);
 
-  // ---------- Inventaris ----------
-  const inventaris = useMemo(() => {
-    const temuan: Temuan[] = [];
-    const rugi = products.filter((p) => p.sellingPrice < p.unitCost);
-    const menipis = products.filter((p) => p.qty < 20);
-    const tipis = products.filter((p) => p.sellingPrice >= p.unitCost && (p.sellingPrice - p.unitCost) / (p.sellingPrice || 1) < 0.15);
-    if (rugi.length)
-      temuan.push({
-        judul: `${rugi.length} produk dijual di bawah HPP`,
-        detail: rugi.map((p) => p.name).slice(0, 5).join(", "),
-        saran: "Naikkan harga jual atau hitung ulang HPP lewat Pembuat HPP.",
-        tingkat: "tinggi",
+  // ---------- Inventory ----------
+  const inventory = useMemo(() => {
+    const findings: Finding[] = [];
+    const losing = products.filter((p) => p.sellingPrice < p.unitCost);
+    const low = products.filter((p) => p.qty < 20);
+    const thin = products.filter((p) => p.sellingPrice >= p.unitCost && (p.sellingPrice - p.unitCost) / (p.sellingPrice || 1) < 0.15);
+    if (losing.length)
+      findings.push({
+        title: `${losing.length} products sold below COGS`,
+        detail: losing.map((p) => p.name).slice(0, 5).join(", "),
+        advice: "Raise the selling price or recalculate COGS with the COGS Builder.",
+        severity: "high",
       });
-    if (menipis.length)
-      temuan.push({
-        judul: `${menipis.length} produk stoknya menipis`,
-        detail: menipis.map((p) => `${p.name} (${p.qty})`).slice(0, 5).join(", "),
-        saran: "Pesan ulang ke supplier sebelum jam puncak penjualan.",
-        tingkat: menipis.length > 5 ? "sedang" : "rendah",
+    if (low.length)
+      findings.push({
+        title: `${low.length} products are running low`,
+        detail: low.map((p) => `${p.name} (${p.qty})`).slice(0, 5).join(", "),
+        advice: "Reorder from suppliers before peak sales hours.",
+        severity: low.length > 5 ? "medium" : "low",
       });
-    if (tipis.length)
-      temuan.push({
-        judul: `${tipis.length} produk bermargin tipis (<15%)`,
-        detail: tipis.map((p) => p.name).slice(0, 5).join(", "),
-        saran: "Gunakan Smart Pricing untuk membandingkan dengan harga pasar.",
-        tingkat: "rendah",
+    if (thin.length)
+      findings.push({
+        title: `${thin.length} products have thin margins (<15%)`,
+        detail: thin.map((p) => p.name).slice(0, 5).join(", "),
+        advice: "Use Smart Pricing to compare with market prices.",
+        severity: "low",
       });
-    const puncak = [...PENJUALAN_PER_JAM].sort((a, b) => b.n - a.n)[0];
-    temuan.push({
-      judul: `Jam puncak penjualan ${puncak.jam}`,
-      detail: `${puncak.n} transaksi per jam pada akhir pekan.`,
-      saran: "Pastikan stok produk terlaris aman 2 jam sebelum jam puncak untuk mencegah kehilangan penjualan.",
-      tingkat: "rendah",
+    const peak = [...SALES_PER_HOUR].sort((a, b) => b.n - a.n)[0];
+    findings.push({
+      title: `Peak sales hour ${peak.hour}`,
+      detail: `${peak.n} transactions per hour on weekends.`,
+      advice: "Make sure best-seller stock is secured 2 hours before the peak to avoid lost sales.",
+      severity: "low",
     });
-    return { temuan, puncak: puncak.jam };
+    return { findings, peak: peak.hour };
   }, [products]);
 
-  // ---------- Penggajian ----------
-  const penggajian = useMemo(() => {
-    const k = karyawanSektor(sector, unitAudit.split("|"));
-    const temuan: Temuan[] = [];
-    const absen = 100 - k.reduce((s, x) => s + x.kehadiran, 0) / k.length;
-    const rendah = k.filter((x) => x.kehadiran < 90);
-    if (absen > 8)
-      temuan.push({
-        judul: "Tingkat ketidakhadiran tinggi",
-        detail: `Rata-rata ${absen.toFixed(1)}% hari kerja tidak hadir tepat waktu.`,
-        saran: "Cek jadwal shift malam dan terapkan kebijakan kehadiran yang jelas.",
-        tingkat: absen > 12 ? "tinggi" : "sedang",
+  // ---------- Payroll ----------
+  const payroll = useMemo(() => {
+    const e = sectorEmployees(sector, auditUnits.split("|"));
+    const findings: Finding[] = [];
+    const absent = 100 - e.reduce((s, x) => s + x.attendance, 0) / e.length;
+    const lowAttendance = e.filter((x) => x.attendance < 90);
+    if (absent > 8)
+      findings.push({
+        title: "High absenteeism",
+        detail: `On average ${absent.toFixed(1)}% of workdays without on-time attendance.`,
+        advice: "Check night shift schedules and set a clear attendance policy.",
+        severity: absent > 12 ? "high" : "medium",
       });
-    if (rendah.length)
-      temuan.push({
-        judul: `${rendah.length} karyawan kehadirannya di bawah 90%`,
-        detail: rendah.map((x) => `${x.nama} (${x.kehadiran}%)`).join(", "),
-        saran: "Lakukan pembinaan satu per satu dan evaluasi beban kerja.",
-        tingkat: "sedang",
+    if (lowAttendance.length)
+      findings.push({
+        title: `${lowAttendance.length} employees have attendance below 90%`,
+        detail: lowAttendance.map((x) => `${x.name} (${x.attendance}%)`).join(", "),
+        advice: "Hold one-on-one coaching and review workloads.",
+        severity: "medium",
       });
-    const g = k.map(hitungGaji);
-    const bruto = g.reduce((s, x) => s + x.bruto, 0);
-    const lembur = k.reduce((s, x) => s + x.lembur, 0);
-    if (lembur / bruto > 0.06)
-      temuan.push({
-        judul: "Biaya lembur tinggi",
-        detail: `Lembur ${formatRp(lembur)} atau ${((lembur / bruto) * 100).toFixed(1)}% dari gaji bruto.`,
-        saran: "Atur ulang jadwal shift atau tambah tenaga paruh waktu di jam puncak.",
-        tingkat: "sedang",
+    const pay = e.map(computePay);
+    const gross = pay.reduce((s, x) => s + x.gross, 0);
+    const overtime = e.reduce((s, x) => s + x.overtime, 0);
+    if (overtime / gross > 0.06)
+      findings.push({
+        title: "High overtime costs",
+        detail: `Overtime of ${formatRp(overtime)}, or ${((overtime / gross) * 100).toFixed(1)}% of gross pay.`,
+        advice: "Rearrange shift schedules or add part-time staff during peak hours.",
+        severity: "medium",
       });
-    const rasio = (bruto * 12) / ((lap.ringkasan.totalPendapatan / lap.bulanBerjalan) * 12 || 1);
-    temuan.push({
-      judul: "Rasio biaya gaji terhadap pendapatan",
-      detail: `${(rasio * 100).toFixed(1)}% dari pendapatan.`,
-      saran: rasio > 0.2 ? "Rasio di atas 20%, tinjau produktivitas per karyawan." : "Masih dalam batas wajar UMKM (di bawah 20%).",
-      tingkat: rasio > 0.2 ? "sedang" : "rendah",
+    const ratio = (gross * 12) / ((rep.summary.totalRevenue / rep.ongoingMonth) * 12 || 1);
+    findings.push({
+      title: "Payroll-to-revenue ratio",
+      detail: `${(ratio * 100).toFixed(1)}% of revenue.`,
+      advice: ratio > 0.2 ? "The ratio is above 20%, review productivity per employee." : "Still within a healthy range for MSMEs (below 20%).",
+      severity: ratio > 0.2 ? "medium" : "low",
     });
-    const grafik = k.map((x) => ({ nama: x.nama.split(" ")[0], kehadiran: x.kehadiran, kinerja: x.kinerja }));
-    return { temuan, grafik };
-  }, [sector, lap, unitAudit]);
+    const chart = e.map((x) => ({ name: x.name.split(" ")[0], attendance: x.attendance, performance: x.performance }));
+    return { findings, chart };
+  }, [sector, rep, auditUnits]);
 
-  // ---------- Pemasaran ----------
-  const pemasaran = useMemo(() => {
-    const u = ulasanAwal();
-    const temuan: Temuan[] = [];
-    const neg = u.filter((x) => x.sentimen === "negatif");
-    const share = neg.length / u.length;
+  // ---------- Marketing ----------
+  const marketing = useMemo(() => {
+    const r = initialReviews();
+    const findings: Finding[] = [];
+    const neg = r.filter((x) => x.sentiment === "negative");
+    const share = neg.length / r.length;
     if (share > 0.15)
-      temuan.push({
-        judul: "Porsi ulasan negatif tinggi",
-        detail: `${Math.round(share * 100)}% ulasan bernada negatif.`,
-        saran: "Balas setiap ulasan negatif dalam 24 jam dan tawarkan solusi.",
-        tingkat: share > 0.25 ? "tinggi" : "sedang",
+      findings.push({
+        title: "High share of negative reviews",
+        detail: `${Math.round(share * 100)}% of reviews are negative.`,
+        advice: "Reply to every negative review within 24 hours and offer a solution.",
+        severity: share > 0.25 ? "high" : "medium",
       });
-    const topik: Topik[] = ["Rasa / Kualitas", "Harga", "Pengiriman", "Pelayanan", "Kemasan"];
-    const keluhan = topik.map((t) => ({ t, n: neg.filter((x) => x.topik.includes(t)).length })).sort((a, b) => b.n - a.n)[0];
-    if (keluhan.n)
-      temuan.push({
-        judul: `Keluhan utama: ${keluhan.t}`,
-        detail: `${keluhan.n} ulasan negatif menyinggung topik ini.`,
-        saran: "Lihat tab Pemasaran di Manajemen Internal untuk rincian per platform.",
-        tingkat: "sedang",
+    const topics: Topic[] = ["Taste / Quality", "Price", "Delivery", "Service", "Packaging"];
+    const complaint = topics.map((t) => ({ t, n: neg.filter((x) => x.topics.includes(t)).length })).sort((a, b) => b.n - a.n)[0];
+    if (complaint.n)
+      findings.push({
+        title: `Main complaint: ${complaint.t}`,
+        detail: `${complaint.n} negative reviews mention this topic.`,
+        advice: "See the Marketing tab in Internal Management for a per-platform breakdown.",
+        severity: "medium",
       });
     const platform = ["Instagram", "TikTok", "Shopee", "Tokopedia"].map((p) => {
-      const xs = u.filter((x) => x.platform === p);
+      const xs = r.filter((x) => x.platform === p);
       return { platform: p, rating: xs.reduce((s, x) => s + x.rating, 0) / (xs.length || 1) };
     });
     platform
       .filter((p) => p.rating < 3.8)
       .forEach((p) =>
-        temuan.push({
-          judul: `Rating ${p.platform} di bawah 3,8`,
-          detail: `Rata-rata ${p.rating.toFixed(1)} bintang.`,
-          saran: `Prioritaskan perbaikan layanan dan respon chat di ${p.platform}.`,
-          tingkat: "sedang",
+        findings.push({
+          title: `${p.platform} rating below 3.8`,
+          detail: `Average of ${p.rating.toFixed(1)} stars.`,
+          advice: `Prioritize improving service and chat response on ${p.platform}.`,
+          severity: "medium",
         }),
       );
-    return { temuan, platform };
+    return { findings, platform };
   }, []);
 
-  const aspek = [
-    { key: "keuangan" as const, label: "Keuangan", skor: skorDari(keuangan.temuan) },
-    { key: "inventaris" as const, label: "Persediaan", skor: skorDari(inventaris.temuan) },
-    { key: "penggajian" as const, label: "Sumber Daya", skor: skorDari(penggajian.temuan) },
-    { key: "pemasaran" as const, label: "Pemasaran", skor: skorDari(pemasaran.temuan) },
+  const aspects = [
+    { key: "finance" as const, label: "Finance", score: scoreFrom(finance.findings) },
+    { key: "inventory" as const, label: "Stock", score: scoreFrom(inventory.findings) },
+    { key: "payroll" as const, label: "Human Resources", score: scoreFrom(payroll.findings) },
+    { key: "marketing" as const, label: "Marketing", score: scoreFrom(marketing.findings) },
   ];
-  const skorTotal = Math.round(aspek.reduce((s, a) => s + a.skor, 0) / aspek.length);
-  const semua = [...keuangan.temuan, ...inventaris.temuan, ...penggajian.temuan, ...pemasaran.temuan];
-  const prioritas = semua.filter((t) => t.tingkat !== "rendah").slice(0, 4);
-  const catatanKonsultasi = prioritas.map((p) => p.judul).join("; ");
+  const totalScore = Math.round(aspects.reduce((s, a) => s + a.score, 0) / aspects.length);
+  const all = [...finance.findings, ...inventory.findings, ...payroll.findings, ...marketing.findings];
+  const priorities = all.filter((t) => t.severity !== "low").slice(0, 4);
+  const consultationNotes = priorities.map((p) => p.title).join("; ");
 
   return (
     <div className="max-w-[80rem] mx-auto space-y-6">
       <p className="text-sm text-gray-600">
-        Deteksi anomali dan rekomendasi berbasis data dari laporan keuangan, inventaris, penggajian, dan pemasaran.
+        Anomaly detection and data-driven recommendations from financial reports, inventory, payroll, and marketing.
       </p>
 
-      {/* Ringkasan atas */}
-      <section id="audit-ringkasan" className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Top summary */}
+      <section id="audit-summary" className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         <div className="card-gradient grad-navy lg:col-span-5 p-6">
           <div className="relative flex items-center gap-2 mb-3">
             <Gauge className="w-5 h-5 text-white" />
-            <h2 className="text-lg font-semibold">Skor Kesehatan UMKM</h2>
+            <h2 className="text-lg font-semibold">MSME Health Score</h2>
           </div>
           <div className="relative flex items-end gap-2 mb-4">
             <span className="text-5xl font-extrabold">
-              <AngkaBerjalan nilai={skorTotal} format={String} />
+              <AnimatedNumber value={totalScore} format={String} />
             </span>
             <span className="text-sm text-white/70 mb-2">/ 100</span>
           </div>
           <div className="relative space-y-3">
-            {aspek.map((a) => (
+            {aspects.map((a) => (
               <button key={a.key} onClick={() => setParams({ tab: a.key })} className="w-full text-left">
                 <div className="flex justify-between text-sm">
                   <span className="font-medium text-white/90">{a.label}</span>
-                  <span className="text-white/80">{a.skor}</span>
+                  <span className="text-white/80">{a.score}</span>
                 </div>
                 <div className="mt-1 h-2 rounded-full bg-white/15 overflow-hidden">
                   <div
-                    className={`h-full rounded-full ${a.skor >= 80 ? "bg-emerald-400" : a.skor >= 60 ? "bg-amber-400" : "bg-red-400"}`}
-                    style={{ width: `${a.skor}%` }}
+                    className={`h-full rounded-full ${a.score >= 80 ? "bg-emerald-400" : a.score >= 60 ? "bg-amber-400" : "bg-red-400"}`}
+                    style={{ width: `${a.score}%` }}
                   />
                 </div>
               </button>
@@ -337,80 +337,80 @@ function DataDriven() {
           </div>
         </div>
         <div className="card-elegant lg:col-span-7 p-6 flex flex-col">
-          <h2 className="text-lg font-semibold mb-3">Ringkasan Strategis</h2>
-          {prioritas.length === 0 ? (
-            <p className="text-sm text-gray-600">Tidak ada temuan prioritas. Pertahankan kinerja saat ini.</p>
+          <h2 className="text-lg font-semibold mb-3">Strategic Summary</h2>
+          {priorities.length === 0 ? (
+            <p className="text-sm text-gray-600">No priority findings. Keep up the current performance.</p>
           ) : (
             <ul className="space-y-2 text-sm text-gray-700">
-              {prioritas.map((t) => (
-                <li key={t.judul} className="flex gap-2">
-                  <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${t.tingkat === "tinggi" ? "text-red-600" : "text-amber-600"}`} />
+              {priorities.map((t) => (
+                <li key={t.title} className="flex gap-2">
+                  <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${t.severity === "high" ? "text-red-600" : "text-amber-600"}`} />
                   <span>
-                    <b>{t.judul}.</b> {t.saran}
+                    <b>{t.title}.</b> {t.advice}
                   </span>
                 </li>
               ))}
             </ul>
           )}
           <Link
-            to={`/konsultasi?topik=${encodeURIComponent("Temuan Audit")}&catatan=${encodeURIComponent(catatanKonsultasi)}`}
+            to={`/consultation?topic=${encodeURIComponent("Audit Findings")}&notes=${encodeURIComponent(consultationNotes)}`}
             className="mt-auto pt-4"
           >
             <span className="inline-flex w-full items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-semibold shadow">
-              Konsultasikan dengan Pakar Catalys <ArrowRight className="w-4 h-4" />
+              Consult a Catalys Expert <ArrowRight className="w-4 h-4" />
             </span>
           </Link>
         </div>
       </section>
 
-      <PillTabs tabs={TABS} active={aktif} onChange={(k) => setParams({ tab: k })} />
+      <PillTabs tabs={TABS} active={active} onChange={(k) => setParams({ tab: k })} />
 
-      {aktif === "keuangan" && (
+      {active === "finance" && (
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="card-elegant lg:col-span-7 p-6">
-            <h3 className="font-semibold mb-1">Deteksi Anomali Pendapatan & Beban</h3>
-            <p className="text-xs text-gray-500 mb-3">Konsolidasi {lap.tahun}. Titik merah = bulan dengan lonjakan beban.</p>
+            <h3 className="font-semibold mb-1">Revenue & Expense Anomaly Detection</h3>
+            <p className="text-xs text-gray-500 mb-3">Consolidated {rep.year}. Red dot = month with an expense spike.</p>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <ComposedChart data={lap.bulanan}>
+                <ComposedChart data={rep.monthly}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="bulan" tickLine={false} axisLine={false} />
-                  <YAxis width={60} tickFormatter={(v) => formatRpSingkat(Number(v)).replace("Rp ", "")} tickLine={false} axisLine={false} fontSize={11} />
+                  <XAxis dataKey="month" tickLine={false} axisLine={false} />
+                  <YAxis width={60} tickFormatter={(v) => formatRpShort(Number(v)).replace("Rp ", "")} tickLine={false} axisLine={false} fontSize={11} />
                   <ReTooltip formatter={(v: number, n: string) => [formatRp(v), n]} />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Line type="monotone" dataKey="pendapatan" name="Pendapatan" stroke="#2f6b8f" strokeWidth={2} dot={{ r: 2 }} />
-                  <Line type="monotone" dataKey="beban" name="Beban" stroke="#9cb2c1" strokeWidth={2} dot={{ r: 2 }} />
-                  {keuangan.lonjakan && (
-                    <ReferenceDot x={keuangan.lonjakan.bulan} y={keuangan.lonjakan.beban} r={7} fill="#9cb2c1" stroke="#fff" strokeWidth={2} />
+                  <Line type="monotone" dataKey="revenue" name="Revenue" stroke="#2f6b8f" strokeWidth={2} dot={{ r: 2 }} />
+                  <Line type="monotone" dataKey="expense" name="Expenses" stroke="#9cb2c1" strokeWidth={2} dot={{ r: 2 }} />
+                  {finance.spike && (
+                    <ReferenceDot x={finance.spike.month} y={finance.spike.expense} r={7} fill="#9cb2c1" stroke="#fff" strokeWidth={2} />
                   )}
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
             <Link to="/financial" className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-              Buka Laporan Keuangan <ArrowRight className="w-4 h-4" />
+              Open Financial Reports <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
           <div className="lg:col-span-5">
-            <DaftarTemuan temuan={keuangan.temuan} />
+            <FindingList findings={finance.findings} />
           </div>
         </section>
       )}
 
-      {aktif === "inventaris" && (
+      {active === "inventory" && (
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="card-elegant lg:col-span-7 p-6">
-            <h3 className="font-semibold mb-1">Penjualan per Jam</h3>
-            <p className="text-xs text-gray-500 mb-3">Rata-rata transaksi kasir akhir pekan. Batang emas = jam puncak.</p>
+            <h3 className="font-semibold mb-1">Sales per Hour</h3>
+            <p className="text-xs text-gray-500 mb-3">Average weekend cashier transactions. Highlighted bar = peak hour.</p>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={PENJUALAN_PER_JAM} barCategoryGap={8}>
+                <BarChart data={SALES_PER_HOUR} barCategoryGap={8}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="jam" tickLine={false} axisLine={false} fontSize={11} />
+                  <XAxis dataKey="hour" tickLine={false} axisLine={false} fontSize={11} />
                   <YAxis width={36} tickLine={false} axisLine={false} />
-                  <ReTooltip formatter={(v: number) => [`${v} transaksi`, "Jumlah"]} />
+                  <ReTooltip formatter={(v: number) => [`${v} transactions`, "Count"]} />
                   <Bar dataKey="n" radius={[6, 6, 0, 0]}>
-                    {PENJUALAN_PER_JAM.map((x) => (
-                      <Cell key={x.jam} fill={x.jam === inventaris.puncak ? "#5487ab" : "#2f6b8f"} />
+                    {SALES_PER_HOUR.map((x) => (
+                      <Cell key={x.hour} fill={x.hour === inventory.peak ? "#5487ab" : "#2f6b8f"} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -418,69 +418,69 @@ function DataDriven() {
             </div>
           </div>
           <div className="lg:col-span-5">
-            <DaftarTemuan temuan={inventaris.temuan} />
+            <FindingList findings={inventory.findings} />
           </div>
         </section>
       )}
 
-      {aktif === "penggajian" && (
+      {active === "payroll" && (
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="card-elegant lg:col-span-7 p-6">
-            <h3 className="font-semibold mb-1">Kehadiran & Kinerja Karyawan</h3>
-            <p className="text-xs text-gray-500 mb-3">Garis batas kehadiran sehat: 90%.</p>
+            <h3 className="font-semibold mb-1">Employee Attendance & Performance</h3>
+            <p className="text-xs text-gray-500 mb-3">Healthy attendance threshold: 90%.</p>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={penggajian.grafik}>
+                <BarChart data={payroll.chart}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="nama" tickLine={false} axisLine={false} fontSize={11} />
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} fontSize={11} />
                   <YAxis domain={[50, 100]} width={32} tickLine={false} axisLine={false} />
                   <ReTooltip />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Bar dataKey="kehadiran" name="Kehadiran (%)" radius={[4, 4, 0, 0]}>
-                    {penggajian.grafik.map((x) => (
-                      <Cell key={x.nama} fill={x.kehadiran < 90 ? "#9cb2c1" : "#2f6b8f"} />
+                  <Bar dataKey="attendance" name="Attendance (%)" radius={[4, 4, 0, 0]}>
+                    {payroll.chart.map((x) => (
+                      <Cell key={x.name} fill={x.attendance < 90 ? "#9cb2c1" : "#2f6b8f"} />
                     ))}
                   </Bar>
-                  <Bar dataKey="kinerja" name="Kinerja" fill="#9cb2c1" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="performance" name="Performance" fill="#9cb2c1" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <Link to="/internal-management?tab=penggajian" className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-              Buka Sumber Daya <ArrowRight className="w-4 h-4" />
+            <Link to="/internal-management?tab=payroll" className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+              Open Human Resources <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
           <div className="lg:col-span-5">
-            <DaftarTemuan temuan={penggajian.temuan} />
+            <FindingList findings={payroll.findings} />
           </div>
         </section>
       )}
 
-      {aktif === "pemasaran" && (
+      {active === "marketing" && (
         <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           <div className="card-elegant lg:col-span-7 p-6">
-            <h3 className="font-semibold mb-1">Rating Rata-rata per Platform</h3>
-            <p className="text-xs text-gray-500 mb-3">Ulasan Instagram, TikTok, Shopee, dan Tokopedia.</p>
+            <h3 className="font-semibold mb-1">Average Rating per Platform</h3>
+            <p className="text-xs text-gray-500 mb-3">Reviews from Instagram, TikTok, Shopee, and Tokopedia.</p>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={pemasaran.platform}>
+                <BarChart data={marketing.platform}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="platform" tickLine={false} axisLine={false} />
                   <YAxis domain={[0, 5]} width={28} tickLine={false} axisLine={false} />
                   <ReTooltip formatter={(v: number) => [v.toFixed(1), "Rating"]} />
                   <Bar dataKey="rating" radius={[6, 6, 0, 0]}>
-                    {pemasaran.platform.map((p) => (
+                    {marketing.platform.map((p) => (
                       <Cell key={p.platform} fill={p.rating < 3.8 ? "#9cb2c1" : "#2f6b8f"} />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
-            <Link to="/internal-management?tab=pemasaran" className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
-              Buka Pemasaran <ArrowRight className="w-4 h-4" />
+            <Link to="/internal-management?tab=marketing" className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+              Open Marketing <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
           <div className="lg:col-span-5">
-            <DaftarTemuan temuan={pemasaran.temuan} />
+            <FindingList findings={marketing.findings} />
           </div>
         </section>
       )}

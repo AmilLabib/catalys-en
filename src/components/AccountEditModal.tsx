@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
-import Lapisan from "../components/Lapisan";
+import Overlay from "../components/Overlay";
 
-const KATEGORI_AKUN: { value: string; label: string }[] = [
-  { value: "asset", label: "Aset" },
-  { value: "liability", label: "Liabilitas" },
-  { value: "equity", label: "Ekuitas" },
-  { value: "revenue", label: "Pendapatan" },
-  { value: "expense", label: "Beban" },
-  { value: "distribution", label: "Distribusi / Prive" },
+const ACCOUNT_CATEGORIES: { value: string; label: string }[] = [
+  { value: "asset", label: "Asset" },
+  { value: "liability", label: "Liability" },
+  { value: "equity", label: "Equity" },
+  { value: "revenue", label: "Revenue" },
+  { value: "expense", label: "Expense" },
+  { value: "distribution", label: "Distribution / Drawings" },
 ];
 
 export default function AccountEditModal({
@@ -53,10 +53,10 @@ export default function AccountEditModal({
   const isEdit = !!initial?.code;
 
   const handleSave = () => {
-    if (!code.trim() || !name.trim()) return setError("Kode dan nama akun wajib diisi.");
+    if (!code.trim() || !name.trim()) return setError("Account code and name are required.");
     if (!/^\d+(\.\d+)*$/.test(code.trim()))
-      return setError("Format kode memakai angka dan titik, misalnya 1.1.1.08.");
-    // Pos laporan ditentukan dari prefiks kode akun; target disimpan untuk kompatibilitas.
+      return setError("The code format uses numbers and dots, e.g. 1.1.1.08.");
+    // The report line item is determined by the account code prefix; target is kept for compatibility.
     const kind = type === "revenue" || type === "expense" ? "is" : type === "equity" || type === "distribution" ? "equity" : "bs";
     onSubmit({
       code: code.trim(),
@@ -71,25 +71,25 @@ export default function AccountEditModal({
   const input = "w-full mt-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-4 focus:ring-primary/10";
 
   return (
-    <Lapisan className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <Overlay className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative bg-white rounded-2xl p-6 w-[min(100%,560px)] shadow-lg">
-        <h3 className="text-lg font-semibold mb-4">{isEdit ? "Ubah Akun" : "Tambah Akun"}</h3>
+        <h3 className="text-lg font-semibold mb-4">{isEdit ? "Edit Account" : "Add Account"}</h3>
         <div className="space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <label className="sm:col-span-1">
-              <span className="text-sm text-gray-700">Kode</span>
+              <span className="text-sm text-gray-700">Code</span>
               <input className={input} value={code} placeholder="1.1.1.08" onChange={(e) => setCode(e.target.value)} />
             </label>
             <label className="sm:col-span-2">
-              <span className="text-sm text-gray-700">Nama akun</span>
+              <span className="text-sm text-gray-700">Account name</span>
               <input className={input} value={name} onChange={(e) => setName(e.target.value)} />
             </label>
           </div>
           <label className="block">
-            <span className="text-sm text-gray-700">Kategori</span>
+            <span className="text-sm text-gray-700">Category</span>
             <select className={input} value={type} onChange={(e) => setType(e.target.value)}>
-              {KATEGORI_AKUN.map((k) => (
+              {ACCOUNT_CATEGORIES.map((k) => (
                 <option key={k.value} value={k.value}>
                   {k.label}
                 </option>
@@ -97,24 +97,24 @@ export default function AccountEditModal({
             </select>
           </label>
           <label className="block">
-            <span className="text-sm text-gray-700">Keterangan</span>
+            <span className="text-sm text-gray-700">Description</span>
             <textarea className={input} rows={3} value={description} placeholder="Normal: Debit" onChange={(e) => setDescription(e.target.value)} />
           </label>
           <p className="text-xs text-gray-500">
-            Akun otomatis masuk ke pos laporan keuangan sesuai awalan kodenya (mis. 1.1.1 = Kas dan setara kas).
+            Accounts are automatically mapped to financial report line items by their code prefix (e.g. 1.1.1 = Cash and cash equivalents).
           </p>
           {error && <p className="text-sm text-red-600">{error}</p>}
         </div>
 
         <div className="mt-5 flex justify-end gap-2">
           <button onClick={onClose} className="px-4 py-2 border rounded-full text-sm">
-            Batal
+            Cancel
           </button>
           <button onClick={handleSave} className="px-5 py-2 rounded-full bg-primary text-white text-sm font-semibold">
-            Simpan
+            Save
           </button>
         </div>
       </div>
-    </Lapisan>
+    </Overlay>
   );
 }

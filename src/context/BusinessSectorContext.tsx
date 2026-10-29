@@ -1,13 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 export type BusinessSector =
-  | "kuliner"
-  | "agribisnis"
+  | "culinary"
+  | "agribusiness"
   | "fashion"
-  | "industri"
-  | "perdagangan";
+  | "manufacturing"
+  | "trade";
 
-const STORAGE_KEY = "business_sector_v1";
+const STORAGE_KEY = "business_sector_v2";
+const SECTORS: BusinessSector[] = ["culinary", "agribusiness", "fashion", "manufacturing", "trade"];
 
 type ContextShape = {
   sector: BusinessSector;
@@ -24,11 +25,11 @@ export function BusinessSectorProvider({
   const [sector, setSector] = useState<BusinessSector>(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) return raw as BusinessSector;
+      if (raw && SECTORS.includes(raw as BusinessSector)) return raw as BusinessSector;
     } catch (e) {
       // ignore
     }
-    return "kuliner";
+    return "culinary";
   });
 
   useEffect(() => {
@@ -52,9 +53,9 @@ export function useBusinessSector() {
 }
 
 export const SECTOR_OPTIONS: { value: BusinessSector; label: string }[] = [
-  { value: "kuliner", label: "Kuliner" },
-  { value: "agribisnis", label: "Agribisnis dan Pertanian" },
-  { value: "fashion", label: "Fashion & Kecantikan" },
-  { value: "industri", label: "Industri Pengolahan" },
-  { value: "perdagangan", label: "Perdagangan / Retail" },
+  { value: "culinary", label: "Culinary" },
+  { value: "agribusiness", label: "Agribusiness & Agriculture" },
+  { value: "fashion", label: "Fashion & Beauty" },
+  { value: "manufacturing", label: "Manufacturing" },
+  { value: "trade", label: "Trade / Retail" },
 ];

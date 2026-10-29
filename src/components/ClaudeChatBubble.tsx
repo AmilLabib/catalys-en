@@ -2,12 +2,12 @@ import { useState, useEffect, useRef } from "react";
 import { MessageCircle, X, Send, Loader2 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { useAccount } from "../context/AccountContext";
-import { pesanKuotaHabis } from "../config/access";
+import { quotaExhaustedMessage } from "../config/access";
 import QuotaBadge from "./QuotaBadge";
 
 export default function ClaudeChatBubble() {
   const location = useLocation();
-  const { plan, quotaRemaining, pakaiKuota } = useAccount();
+  const { plan, quotaRemaining, consumeQuota } = useAccount();
   const [isOpen, setIsOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [message, setMessage] = useState("");
@@ -15,7 +15,7 @@ export default function ClaudeChatBubble() {
   const [chatHistory, setChatHistory] = useState([
     {
       role: "assistant",
-      content: "Halo! Saya catalys bot. Ada yang bisa saya bantu hari ini?",
+      content: "Hi! I'm catalys bot. How can I help you today?",
     },
   ]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -56,12 +56,12 @@ export default function ClaudeChatBubble() {
     const userMessage = message.trim();
     setMessage("");
 
-    // kuota dipotong hanya bila bot berhasil menjawab
+    // the quota is only deducted when the bot answers successfully
     if (quotaRemaining("aiBot") === 0) {
       setChatHistory((prev) => [
         ...prev,
         { role: "user", content: userMessage },
-        { role: "assistant", content: pesanKuotaHabis("aiBot", plan) },
+        { role: "assistant", content: quotaExhaustedMessage("aiBot", plan) },
       ]);
       return;
     }
@@ -81,38 +81,38 @@ export default function ClaudeChatBubble() {
         content: msg.content,
       }));
 
-      // Konteks pengetahuan aplikasi Catalys
-      const systemContext = `Kamu adalah 'catalys bot', asisten AI resmi untuk aplikasi Catalys - platform terpadu manajemen keuangan dan operasional UMKM Indonesia.
-Tugasmu adalah membantu pemilik dan pengelola UMKM dengan ramah, praktis, dan solutif.
+      // Catalys app knowledge context
+      const systemContext = `You are 'catalys bot', the official AI assistant for the Catalys app - an integrated financial and operations management platform for Indonesian MSMEs.
+Your job is to help MSME owners and managers in a friendly, practical, and solution-oriented way.
 
-PENGETAHUAN APLIKASI CATALYS:
-1. Dashboard (/dashboard): Ringkasan performa bisnis, omzet, laba bersih, dan grafik tren.
-2. Financial (/financial): Arus kas, laporan keuangan (laba rugi, neraca), dan fitur Scan Struk otomatis (foto struk belanja langsung terbaca jadi data transaksi).
-3. Kasir POS (/kasir): Sistem kasir cepat untuk penjualan langsung dan cetak struk nota belanja.
-4. Jurnal (/jurnal): Pencatatan jurnal akuntansi debit & kredit serta buku besar otomatis.
-5. Bagan Akun (/chart-of-accounts): Pengaturan struktur akun keuangan (COA) bisnis.
-6. Manajemen Internal (/internal-management): Kelola stok bahan baku, belanja supplier dengan Scan Struk otomatis, peta supplier terdekat, karyawan, KPI, serta legalitas & sertifikasi (Halal, BPOM, NIB).
-7. Data-Driven AI (/data-driven): Analisis bisnis berbasis kecerdasan buatan, audit otomatis, dan deteksi anomali pengeluaran.
-8. Harga Cerdas (/smart-pricing): Rekomendasi harga jual ideal berdasarkan HPP bahan baku, biaya operasional, target margin profit, dan riset pasar.
-9. Permodalan (/permodalan): Pengajuan pinjaman bank (KUR, BCA, Mandiri, BRI) atau investor dengan simulasi cicilan.
-10. Konsultasi (/konsultasi): Sesi konsultasi & mentoring langsung dengan praktisi bisnis.
-11. UMKM Berkembang (/umkm-berkembang): Kurikulum edukasi literasi keuangan dan modul naik kelas UMKM.
-12. Profil & Paket (/profil): Pengaturan profil toko dan kuota paket langganan.
+CATALYS APP KNOWLEDGE:
+1. Dashboard (/dashboard): Business performance summary, turnover, net profit, and trend charts.
+2. Financial (/financial): Cash flow, financial reports (income statement, balance sheet), and automatic Receipt Scan (a photo of a shopping receipt is read straight into transaction data).
+3. POS Cashier (/cashier): Fast cashier system for direct sales and printing receipts.
+4. Journal (/journal): Debit & credit accounting journal entries and an automatic general ledger.
+5. Chart of Accounts (/chart-of-accounts): Setting up the business's financial account structure (COA).
+6. Internal Management (/internal-management): Manage raw material stock, supplier purchases with automatic Receipt Scan, a nearest-supplier map, employees, KPIs, and legal & certifications (Halal, BPOM, NIB).
+7. Data-Driven AI (/data-driven): AI-based business analysis, automatic audits, and expense anomaly detection.
+8. Smart Pricing (/smart-pricing): Ideal selling price recommendations based on raw material COGS, operating costs, target profit margin, and market research.
+9. Funding (/funding): Bank loan applications (KUR, BCA, Mandiri, BRI) or investors, with installment simulations.
+10. Consultation (/consultation): Live consultation & mentoring sessions with business practitioners.
+11. MSME Growth (/msme-growth): Financial literacy curriculum and MSME level-up modules.
+12. Profile & Plans (/profile): Store profile settings and subscription plan quotas.
 
-Saat ini user sedang berada di halaman: '${location.pathname}'.
+The user is currently on the page: '${location.pathname}'.
 
-ATURAN MENJAWAB:
-1. JAWAB SECARA SINGKAT, PADAT, DAN LANGSUNG PADA INTINYA (maksimal 2-3 paragraf pendek).
-2. DILARANG KERAS MENGGUNAKAN FORMATTING MARKDOWN BERLEBIHAN (jangan gunakan tanda pagar #, **, *, -, atau tabel). Gunakan teks biasa (plain text) dengan spasi atau baris baru saja agar rapi di chat widget.
-3. Selalu gunakan Bahasa Indonesia yang ramah, santun, dan solutif.`;
+ANSWERING RULES:
+1. ANSWER BRIEFLY, CONCISELY, AND STRAIGHT TO THE POINT (at most 2-3 short paragraphs).
+2. DO NOT USE EXCESSIVE MARKDOWN FORMATTING (no #, **, *, -, or tables). Use plain text with spaces or line breaks only so it looks tidy in the chat widget.
+3. Always answer in friendly, polite, and helpful English.`;
 
-      // Sertakan riwayat obrolan agar percakapan tetap kontekstual
+      // Include the chat history so the conversation stays in context
       const recentChat = updatedHistory
         .slice(-6)
         .map((m) => `${m.role === "user" ? "User" : "Bot"}: ${m.content}`)
         .join("\n");
 
-      const fullMessage = `${systemContext}\n\nPercakapan:\n${recentChat}\n\nBot:`;
+      const fullMessage = `${systemContext}\n\nConversation:\n${recentChat}\n\nBot:`;
 
       const res = await fetch("/api/gemini", {
         method: "POST",
@@ -138,9 +138,9 @@ ATURAN MENJAWAB:
       const replyText =
         response?.reply ||
         response?.text ||
-        "Halo! Ada yang bisa saya bantu terkait aplikasi Catalys?";
+        "Hi! How can I help you with the Catalys app?";
 
-      pakaiKuota("aiBot");
+      consumeQuota("aiBot");
       setChatHistory((prev) => [
         ...prev,
         { role: "assistant", content: replyText },
@@ -151,7 +151,7 @@ ATURAN MENJAWAB:
         ...prev,
         {
           role: "assistant",
-          content: `Maaf, terjadi kendala: ${error.message || "Gagal terhubung ke AI Bot."}`,
+          content: `Sorry, something went wrong: ${error.message || "Couldn't connect to the AI Bot."}`,
         },
       ]);
     } finally {
@@ -179,10 +179,10 @@ ATURAN MENJAWAB:
             </div>
             <div className="pr-4">
               <p className="text-sm font-semibold text-gray-800 leading-tight">
-                Bingung memakai aplikasi ini?
+                Not sure how to use this app?
               </p>
               <p className="text-xs text-gray-500 mt-1">
-                Yuk, tanya catalys bot!
+                Ask catalys bot!
               </p>
             </div>
             <button
@@ -239,7 +239,7 @@ ATURAN MENJAWAB:
             {isLoading && (
               <div className="max-w-[85%] p-3 rounded-xl text-sm bg-white text-gray-800 border border-gray-200 rounded-tl-none self-start flex items-center gap-2">
                 <Loader2 size={16} className="animate-spin text-primary" />
-                <span>Mengetik...</span>
+                <span>Typing...</span>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -247,7 +247,7 @@ ATURAN MENJAWAB:
 
           {/* Input Area */}
           <div className="px-3 pt-2 bg-white border-t border-gray-100">
-            <QuotaBadge kuota="aiBot" />
+            <QuotaBadge quota="aiBot" />
           </div>
           <div className="p-3 pt-2 bg-white flex items-center gap-2">
             <input
@@ -255,7 +255,7 @@ ATURAN MENJAWAB:
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder="Ketik pesan..."
+              placeholder="Type a message..."
               disabled={isLoading}
               className="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 disabled:opacity-50"
             />
@@ -282,7 +282,7 @@ ATURAN MENJAWAB:
             ? "bg-gray-200 text-gray-600 scale-90"
             : "bg-primary text-white shadow-lg hover:shadow-xl hover:-translate-y-1"
         } w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 z-50`}
-        aria-label="Buka atau tutup obrolan"
+        aria-label="Open or close chat"
       >
         {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
       </button>

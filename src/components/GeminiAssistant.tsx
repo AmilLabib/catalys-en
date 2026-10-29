@@ -57,7 +57,7 @@ export default function GeminiAssistant() {
       <div className="h-40 overflow-y-auto border border-green-50 rounded p-3 mb-3 bg-white">
         {messages.length === 0 && (
           <div className="text-sm text-gray-500">
-            Tanya Gemini mengenai penjurnalan keuangan Anda di sini.
+            Ask Gemini about your financial journal entries here.
           </div>
         )}
         {messages.map((m, i) => (

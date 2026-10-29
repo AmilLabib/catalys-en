@@ -1,30 +1,30 @@
-// Data harga kompetitor contoh (tanpa AI / API), per wilayah. Deterministik
-// dari nama produk + wilayah supaya hasilnya konsisten setiap kali dicari.
+// Sample competitor price data (no AI / API), per region. Deterministic
+// from product name + region so results stay consistent on every search.
 
-export type Wilayah = {
-  kota: string;
-  provinsi: string;
-  indeksHarga: number; // 1 = rata-rata nasional
-  kecamatan: string[];
+export type Region = {
+  city: string;
+  province: string;
+  priceIndex: number; // 1 = national average
+  districts: string[];
 };
 
-export const WILAYAH: Wilayah[] = [
-  { kota: "Jakarta Selatan", provinsi: "DKI Jakarta", indeksHarga: 1.14, kecamatan: ["Kebayoran Baru", "Tebet", "Pancoran", "Cilandak", "Mampang"] },
-  { kota: "Bogor", provinsi: "Jawa Barat", indeksHarga: 1.03, kecamatan: ["Bogor Tengah", "Bogor Utara", "Tanah Sareal", "Bogor Barat", "Bogor Timur"] },
-  { kota: "Bandung", provinsi: "Jawa Barat", indeksHarga: 1.0, kecamatan: ["Coblong", "Sukajadi", "Lengkong", "Buahbatu", "Cicendo"] },
-  { kota: "Semarang", provinsi: "Jawa Tengah", indeksHarga: 0.95, kecamatan: ["Semarang Tengah", "Banyumanik", "Tembalang", "Candisari", "Gajahmungkur"] },
-  { kota: "Surakarta", provinsi: "Jawa Tengah", indeksHarga: 0.92, kecamatan: ["Laweyan", "Banjarsari", "Jebres", "Pasar Kliwon", "Serengan"] },
-  { kota: "Yogyakarta", provinsi: "DI Yogyakarta", indeksHarga: 0.9, kecamatan: ["Gondokusuman", "Umbulharjo", "Danurejan", "Jetis", "Mergangsan"] },
-  { kota: "Surabaya", provinsi: "Jawa Timur", indeksHarga: 1.02, kecamatan: ["Gubeng", "Tegalsari", "Wonokromo", "Sukolilo", "Rungkut"] },
-  { kota: "Malang", provinsi: "Jawa Timur", indeksHarga: 0.94, kecamatan: ["Klojen", "Lowokwaru", "Blimbing", "Sukun", "Kedungkandang"] },
-  { kota: "Denpasar", provinsi: "Bali", indeksHarga: 1.1, kecamatan: ["Denpasar Selatan", "Denpasar Barat", "Denpasar Timur", "Denpasar Utara"] },
-  { kota: "Medan", provinsi: "Sumatera Utara", indeksHarga: 1.0, kecamatan: ["Medan Baru", "Medan Petisah", "Medan Kota", "Medan Johor"] },
-  { kota: "Makassar", provinsi: "Sulawesi Selatan", indeksHarga: 1.04, kecamatan: ["Panakkukang", "Rappocini", "Tamalate", "Makassar"] },
-  { kota: "Balikpapan", provinsi: "Kalimantan Timur", indeksHarga: 1.15, kecamatan: ["Balikpapan Kota", "Balikpapan Selatan", "Balikpapan Utara"] },
+export const REGIONS: Region[] = [
+  { city: "Jakarta Selatan", province: "DKI Jakarta", priceIndex: 1.14, districts: ["Kebayoran Baru", "Tebet", "Pancoran", "Cilandak", "Mampang"] },
+  { city: "Bogor", province: "West Java", priceIndex: 1.03, districts: ["Bogor Tengah", "Bogor Utara", "Tanah Sareal", "Bogor Barat", "Bogor Timur"] },
+  { city: "Bandung", province: "West Java", priceIndex: 1.0, districts: ["Coblong", "Sukajadi", "Lengkong", "Buahbatu", "Cicendo"] },
+  { city: "Semarang", province: "Central Java", priceIndex: 0.95, districts: ["Semarang Tengah", "Banyumanik", "Tembalang", "Candisari", "Gajahmungkur"] },
+  { city: "Surakarta", province: "Central Java", priceIndex: 0.92, districts: ["Laweyan", "Banjarsari", "Jebres", "Pasar Kliwon", "Serengan"] },
+  { city: "Yogyakarta", province: "DI Yogyakarta", priceIndex: 0.9, districts: ["Gondokusuman", "Umbulharjo", "Danurejan", "Jetis", "Mergangsan"] },
+  { city: "Surabaya", province: "East Java", priceIndex: 1.02, districts: ["Gubeng", "Tegalsari", "Wonokromo", "Sukolilo", "Rungkut"] },
+  { city: "Malang", province: "East Java", priceIndex: 0.94, districts: ["Klojen", "Lowokwaru", "Blimbing", "Sukun", "Kedungkandang"] },
+  { city: "Denpasar", province: "Bali", priceIndex: 1.1, districts: ["Denpasar Selatan", "Denpasar Barat", "Denpasar Timur", "Denpasar Utara"] },
+  { city: "Medan", province: "North Sumatra", priceIndex: 1.0, districts: ["Medan Baru", "Medan Petisah", "Medan Kota", "Medan Johor"] },
+  { city: "Makassar", province: "South Sulawesi", priceIndex: 1.04, districts: ["Panakkukang", "Rappocini", "Tamalate", "Makassar"] },
+  { city: "Balikpapan", province: "East Kalimantan", priceIndex: 1.15, districts: ["Balikpapan Kota", "Balikpapan Selatan", "Balikpapan Utara"] },
 ];
 
-// Koordinat pusat kota (lintang, bujur) untuk peta
-export const KOORDINAT_KOTA: Record<string, [number, number]> = {
+// City center coordinates (latitude, longitude) for the map
+export const CITY_COORDINATES: Record<string, [number, number]> = {
   "Jakarta Selatan": [-6.261, 106.81],
   Bogor: [-6.595, 106.806],
   Bandung: [-6.917, 107.619],
@@ -39,102 +39,102 @@ export const KOORDINAT_KOTA: Record<string, [number, number]> = {
   Balikpapan: [-1.265, 116.831],
 };
 
-export type Kompetitor = {
-  toko: string;
-  produk: string;
-  kanal: "Shopee" | "Tokopedia" | "TikTok Shop" | "GrabFood" | "Toko fisik";
-  kecamatan: string;
-  jarakKm: number;
-  harga: number;
+export type Competitor = {
+  store: string;
+  product: string;
+  channel: "Shopee" | "Tokopedia" | "TikTok Shop" | "GrabFood" | "Physical store";
+  district: string;
+  distanceKm: number;
+  price: number;
   rating: number;
-  terjual: number;
-  kemiripan: number; // 0–1, seberapa mirip produknya
-  relevansi: number; // 0–100, skor gabungan
+  sold: number;
+  similarity: number; // 0–1, how similar the product is
+  relevance: number; // 0–100, combined score
 };
 
 export type MarketPricing = {
-  wilayah: Wilayah;
+  region: Region;
   average: number;
   lowest: number;
   highest: number;
-  kompetitor: Kompetitor[]; // relevan, terurut dari paling relevan
-  semua: Kompetitor[]; // semua hasil pencarian
+  competitors: Competitor[]; // relevant, sorted from most relevant
+  all: Competitor[]; // every search result
 };
 
-const TOKO = ["Sumber Rejeki", "Kedai Nusantara", "Berkah Jaya", "Mitra Usaha", "Toko Sinar", "Rumah Produk", "Pojok Hemat", "Warung Barokah", "Sentosa", "Kios Makmur", "Dapur Ibu", "Sahabat"];
-const KANAL: Kompetitor["kanal"][] = ["Shopee", "Tokopedia", "TikTok Shop", "GrabFood", "Toko fisik"];
+const STORES = ["Sumber Rejeki", "Kedai Nusantara", "Berkah Jaya", "Mitra Usaha", "Toko Sinar", "Rumah Produk", "Pojok Hemat", "Warung Barokah", "Sentosa", "Kios Makmur", "Dapur Ibu", "Sahabat"];
+const CHANNELS: Competitor["channel"][] = ["Shopee", "Tokopedia", "TikTok Shop", "GrabFood", "Physical store"];
 
-// Varian produk yang muncul di hasil pencarian dan kemiripannya dengan produk Anda
-const VARIAN: [(n: string) => string, number][] = [
+// Product variants that appear in search results and how similar they are to your product
+const VARIANTS: [(n: string) => string, number][] = [
   [(n) => n, 1],
   [(n) => n, 1],
   [(n) => `${n} Original`, 0.9],
   [(n) => `${n} Jumbo`, 0.75],
   [(n) => `${n} Premium`, 0.7],
-  [(n) => `Paket Hemat ${n}`, 0.6],
-  [(n) => `${n} Isi 2`, 0.5],
-  [(n) => `${n.split(" ")[0]} varian lain`, 0.4],
+  [(n) => `${n} Value Pack`, 0.6],
+  [(n) => `${n} 2-Pack`, 0.5],
+  [(n) => `${n.split(" ")[0]} other variant`, 0.4],
 ];
 
-function acak(seed: number) {
+function random(seed: number) {
   const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
 }
 
-export function bulatkanHarga(v: number) {
+export function roundPrice(v: number) {
   const step = v >= 100_000 ? 1000 : v >= 10_000 ? 500 : 100;
   return Math.round(v / step) * step;
 }
 
-export function cariWilayah(kota: string) {
-  return WILAYAH.find((w) => w.kota === kota) ?? WILAYAH[1];
+export function findRegion(city: string) {
+  return REGIONS.find((r) => r.city === city) ?? REGIONS[1];
 }
 
 /**
- * @param productName nama produk yang dicari
- * @param acuan perkiraan harga nasional (mis. harga jual produk serupa di inventaris)
- * @param kota wilayah pencarian
- * @param radiusKm batas jarak kompetitor yang dianggap relevan
+ * @param productName product name to search for
+ * @param reference estimated national price (e.g. selling price of a similar product in inventory)
+ * @param city search region
+ * @param radiusKm max competitor distance considered relevant
  */
-export function fetchMarketPricing(productName: string, acuan: number, kota: string, radiusKm = 10): Promise<MarketPricing> {
-  const wilayah = cariWilayah(kota);
-  const seed = Array.from(`${productName.toLowerCase()}|${wilayah.kota}`).reduce((s, ch) => s * 31 + ch.charCodeAt(0), 7) % 100_000;
-  const acuanLokal = acuan * wilayah.indeksHarga;
+export function fetchMarketPricing(productName: string, reference: number, city: string, radiusKm = 10): Promise<MarketPricing> {
+  const region = findRegion(city);
+  const seed = Array.from(`${productName.toLowerCase()}|${region.city}`).reduce((s, ch) => s * 31 + ch.charCodeAt(0), 7) % 100_000;
+  const localReference = reference * region.priceIndex;
 
-  const semua: Kompetitor[] = Array.from({ length: 12 }, (_, i) => {
-    const [buatNama, kemiripan] = VARIAN[i % VARIAN.length];
-    // varian "jumbo/premium" cenderung lebih mahal, "paket/varian lain" lebih jauh dari harga acuan
-    const premi = 1 + (1 - kemiripan) * (i % 2 === 0 ? 0.6 : -0.3);
-    const variasi = 0.85 + acak(seed + i * 13) * 0.3;
-    const jarakKm = Math.round((0.4 + acak(seed + i * 5) * 24) * 10) / 10;
-    const harga = bulatkanHarga(acuanLokal * variasi * premi);
-    const kedekatan = Math.max(0, 1 - jarakKm / 25);
-    const selisihHarga = Math.min(1, Math.abs(harga - acuanLokal) / acuanLokal);
-    const relevansi = Math.round((kemiripan * 0.5 + kedekatan * 0.3 + (1 - selisihHarga) * 0.2) * 100);
+  const all: Competitor[] = Array.from({ length: 12 }, (_, i) => {
+    const [makeName, similarity] = VARIANTS[i % VARIANTS.length];
+    // "jumbo/premium" variants tend to cost more, "pack/other variant" drift further from the reference price
+    const premium = 1 + (1 - similarity) * (i % 2 === 0 ? 0.6 : -0.3);
+    const variation = 0.85 + random(seed + i * 13) * 0.3;
+    const distanceKm = Math.round((0.4 + random(seed + i * 5) * 24) * 10) / 10;
+    const price = roundPrice(localReference * variation * premium);
+    const proximity = Math.max(0, 1 - distanceKm / 25);
+    const priceGap = Math.min(1, Math.abs(price - localReference) / localReference);
+    const relevance = Math.round((similarity * 0.5 + proximity * 0.3 + (1 - priceGap) * 0.2) * 100);
     return {
-      toko: `${TOKO[(seed + i) % TOKO.length]}`,
-      produk: buatNama(productName),
-      kanal: KANAL[(seed + i * 2) % KANAL.length],
-      kecamatan: wilayah.kecamatan[(seed + i) % wilayah.kecamatan.length],
-      jarakKm,
-      harga,
-      rating: Math.round((4.2 + acak(seed + i * 7) * 0.8) * 10) / 10,
-      terjual: Math.round(50 + acak(seed + i * 3) * 950),
-      kemiripan,
-      relevansi,
+      store: `${STORES[(seed + i) % STORES.length]}`,
+      product: makeName(productName),
+      channel: CHANNELS[(seed + i * 2) % CHANNELS.length],
+      district: region.districts[(seed + i) % region.districts.length],
+      distanceKm,
+      price,
+      rating: Math.round((4.2 + random(seed + i * 7) * 0.8) * 10) / 10,
+      sold: Math.round(50 + random(seed + i * 3) * 950),
+      similarity,
+      relevance,
     };
-  }).sort((a, b) => b.relevansi - a.relevansi);
+  }).sort((a, b) => b.relevance - a.relevance);
 
-  const hasil = ringkasPasar(semua, wilayah, radiusKm);
-  return new Promise((resolve) => setTimeout(() => resolve(hasil), 600));
+  const result = summarizeMarket(all, region, radiusKm);
+  return new Promise((resolve) => setTimeout(() => resolve(result), 600));
 }
 
-// Kompetitor relevan: produknya cukup mirip (≥ 70%) dan berada dalam radius.
-// Dipisah dari pencarian supaya mengganti radius tidak memakai token lagi.
-export function ringkasPasar(semua: Kompetitor[], wilayah: Wilayah, radiusKm: number): MarketPricing {
-  let kompetitor = semua.filter((k) => k.kemiripan >= 0.7 && k.jarakKm <= radiusKm);
-  if (kompetitor.length < 3) kompetitor = semua.filter((k) => k.kemiripan >= 0.7).slice(0, 5);
-  const hargas = kompetitor.map((k) => k.harga);
-  const average = bulatkanHarga(hargas.reduce((s, h) => s + h, 0) / hargas.length);
-  return { wilayah, average, lowest: Math.min(...hargas), highest: Math.max(...hargas), kompetitor, semua };
+// Relevant competitors: product is similar enough (≥ 70%) and within the radius.
+// Kept separate from the search so changing the radius doesn't use another token.
+export function summarizeMarket(all: Competitor[], region: Region, radiusKm: number): MarketPricing {
+  let competitors = all.filter((c) => c.similarity >= 0.7 && c.distanceKm <= radiusKm);
+  if (competitors.length < 3) competitors = all.filter((c) => c.similarity >= 0.7).slice(0, 5);
+  const prices = competitors.map((c) => c.price);
+  const average = roundPrice(prices.reduce((s, p) => s + p, 0) / prices.length);
+  return { region, average, lowest: Math.min(...prices), highest: Math.max(...prices), competitors, all };
 }

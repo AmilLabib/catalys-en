@@ -1,11 +1,11 @@
-// Utilitas sentral untuk mengelola pool 5 API Key Gemini dengan rotasi otomatis.
-// Jika key aktif terkena limit (429/Resource Exhausted), sistem langsung mencoba key berikutnya.
+// Central utility for managing a pool of 5 Gemini API keys with automatic rotation.
+// If the active key hits a limit (429/Resource Exhausted), the system immediately tries the next key.
 
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 
 /**
- * Mengambil daftar seluruh API key Gemini dari environment.
- * Mendukung GEMINI_API_KEY_1 s/d GEMINI_API_KEY_5 serta fallback GEMINI_API_KEY.
+ * Reads all Gemini API keys from the environment.
+ * Supports GEMINI_API_KEY_1 to GEMINI_API_KEY_5 plus a GEMINI_API_KEY fallback.
  */
 export function getGeminiKeys() {
   const candidates = [
@@ -29,13 +29,13 @@ export function getGeminiKeys() {
 }
 
 /**
- * Memanggil Gemini API dengan rotasi otomatis antar API key (hingga 5 key)
- * serta fallback antar model bila perlu.
+ * Calls the Gemini API with automatic rotation across API keys (up to 5 keys)
+ * and fallback across models if needed.
  */
 export async function fetchGeminiWithRotation(bodyPayload, preferredModel) {
   const keys = getGeminiKeys();
   if (keys.length === 0) {
-    throw new Error("Tidak ada GEMINI_API_KEY yang terdaftar di .env.");
+    throw new Error("No GEMINI_API_KEY is configured in .env.");
   }
 
   const modelCandidates = Array.from(
@@ -51,7 +51,7 @@ export async function fetchGeminiWithRotation(bodyPayload, preferredModel) {
 
   let lastError = null;
 
-  // Coba model prioritas terlebih dahulu, lakukan rotasi ke seluruh 5 API key
+  // Try the priority model first, rotating through all 5 API keys
   for (const model of modelCandidates) {
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i];
@@ -81,8 +81,8 @@ export async function fetchGeminiWithRotation(bodyPayload, preferredModel) {
 
         const errMsg = data?.error?.message || `HTTP ${res.status}`;
         console.warn(
-          `[Gemini Rotation] Key #${i + 1} (${maskedKey}) pada model ${model} gagal (${res.status}): ${errMsg}.` +
-          (i < keys.length - 1 ? ` Mencoba Key #${i + 2}...` : ` Seluruh key pada model ${model} telah dicoba.`)
+          `[Gemini Rotation] Key #${i + 1} (${maskedKey}) on model ${model} failed (${res.status}): ${errMsg}.` +
+          (i < keys.length - 1 ? ` Trying Key #${i + 2}...` : ` All keys for model ${model} have been tried.`)
         );
 
         lastError = errMsg;
@@ -94,6 +94,6 @@ export async function fetchGeminiWithRotation(bodyPayload, preferredModel) {
   }
 
   throw new Error(
-    `Seluruh (${keys.length}) API Key Gemini terkena batas kuota atau gagal: ${lastError || "Tidak ada respon"}`
+    `All (${keys.length}) Gemini API keys hit their quota limit or failed: ${lastError || "No response"}`
   );
 }

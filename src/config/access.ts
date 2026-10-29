@@ -1,24 +1,24 @@
-// Aturan akses fitur: peran akun (induk/cabang) dan paket langganan.
-// Usaha yang belum punya cabang memakai semua fitur dari akun induk.
-// Setelah membuka cabang, fitur dibagi per peran. Semua menu tetap terlihat;
-// fitur di luar peran atau paket memunculkan popup peringatan saat dibuka.
+// Feature access rules: account role (parent/branch) and subscription plan.
+// A business without branches uses every feature from the parent account.
+// Once a branch is opened, features are split by role. Every menu stays visible;
+// features outside the role or plan show a warning popup when opened.
 
-export type Role = "induk" | "cabang";
-export type Plan = "gratis" | "pro" | "bisnis";
+export type Role = "parent" | "branch";
+export type Plan = "free" | "pro" | "business";
 
 export type FeatureKey =
-  | "beranda"
-  | "kasir"
-  | "hargaCerdas"
-  | "baganAkun"
-  | "laporanKeuangan"
-  | "jurnal"
-  | "manajemenInternal"
+  | "home"
+  | "cashier"
+  | "smartPricing"
+  | "chartOfAccounts"
+  | "financialReports"
+  | "journal"
+  | "internalManagement"
   | "audit"
-  | "konsultasi"
-  | "umkmBerkembang"
-  | "permodalan"
-  | "profil";
+  | "consultation"
+  | "msmeGrowth"
+  | "funding"
+  | "profile";
 
 export type FeatureDef = {
   label: string;
@@ -27,170 +27,170 @@ export type FeatureDef = {
   roles: Role[];
 };
 
-export const PLAN_ORDER: Plan[] = ["gratis", "pro", "bisnis"];
+export const PLAN_ORDER: Plan[] = ["free", "pro", "business"];
 
 export const PLAN_LABEL: Record<Plan, string> = {
-  gratis: "Gratis",
+  free: "Free",
   pro: "Pro",
-  bisnis: "Bisnis",
+  business: "Business",
 };
 
 export const ROLE_LABEL: Record<Role, string> = {
-  induk: "Induk",
-  cabang: "Cabang",
+  parent: "Parent",
+  branch: "Branch",
 };
 
-const BOTH: Role[] = ["induk", "cabang"];
+const BOTH: Role[] = ["parent", "branch"];
 
 export const FEATURES: Record<FeatureKey, FeatureDef> = {
-  beranda: { label: "Beranda", path: "/dashboard", minPlan: "gratis", roles: BOTH },
-  kasir: { label: "Kasir POS", path: "/kasir", minPlan: "gratis", roles: ["cabang"] },
-  hargaCerdas: { label: "Smart Pricing", path: "/smart-pricing", minPlan: "pro", roles: ["cabang"] },
-  baganAkun: { label: "Bagan Akun", path: "/chart-of-accounts", minPlan: "gratis", roles: ["cabang"] },
-  laporanKeuangan: { label: "Laporan Keuangan", path: "/financial", minPlan: "gratis", roles: BOTH },
-  jurnal: { label: "Entri Jurnal", path: "/jurnal", minPlan: "gratis", roles: BOTH },
-  // tab di dalamnya dikunci per paket, lihat INTERNAL_TAB_PLAN
-  manajemenInternal: { label: "Manajemen Internal", path: "/internal-management", minPlan: "gratis", roles: BOTH },
-  audit: { label: "Audit Berbasis Data", path: "/data-driven", minPlan: "pro", roles: ["induk"] },
-  // sesi konsultasi dijual terpisah untuk semua paket; Bisnis mendapat 1 sesi gratis
-  konsultasi: { label: "Konsultasi", path: "/konsultasi", minPlan: "gratis", roles: ["induk"] },
-  umkmBerkembang: { label: "UMKM Berkembang", path: "/umkm-berkembang", minPlan: "gratis", roles: ["induk"] },
-  permodalan: { label: "Permodalan", path: "/permodalan", minPlan: "gratis", roles: ["induk"] },
-  profil: { label: "Profil", path: "/profil", minPlan: "gratis", roles: BOTH },
+  home: { label: "Home", path: "/dashboard", minPlan: "free", roles: BOTH },
+  cashier: { label: "POS Cashier", path: "/cashier", minPlan: "free", roles: ["branch"] },
+  smartPricing: { label: "Smart Pricing", path: "/smart-pricing", minPlan: "pro", roles: ["branch"] },
+  chartOfAccounts: { label: "Chart of Accounts", path: "/chart-of-accounts", minPlan: "free", roles: ["branch"] },
+  financialReports: { label: "Financial Reports", path: "/financial", minPlan: "free", roles: BOTH },
+  journal: { label: "Journal Entries", path: "/journal", minPlan: "free", roles: BOTH },
+  // tabs inside are locked per plan, see INTERNAL_TAB_PLAN
+  internalManagement: { label: "Internal Management", path: "/internal-management", minPlan: "free", roles: BOTH },
+  audit: { label: "Data-Driven Audit", path: "/data-driven", minPlan: "pro", roles: ["parent"] },
+  // consultation sessions are sold separately on every plan; Business gets 1 free session
+  consultation: { label: "Consultation", path: "/consultation", minPlan: "free", roles: ["parent"] },
+  msmeGrowth: { label: "MSME Growth", path: "/msme-growth", minPlan: "free", roles: ["parent"] },
+  funding: { label: "Funding", path: "/funding", minPlan: "free", roles: ["parent"] },
+  profile: { label: "Profile", path: "/profile", minPlan: "free", roles: BOTH },
 };
 
 export function planAtLeast(plan: Plan, min: Plan) {
   return PLAN_ORDER.indexOf(plan) >= PLAN_ORDER.indexOf(min);
 }
 
-export function pesanPeran(roles: Role[]) {
-  return `Hanya tersedia di akun ${roles.map((r) => ROLE_LABEL[r]).join(" dan ")}`;
+export function roleMessage(roles: Role[]) {
+  return `Only available on the ${roles.map((r) => ROLE_LABEL[r]).join(" and ")} account`;
 }
 
 export function lockedMessage(min: Plan) {
   return min === "pro"
-    ? "Hanya tersedia di paket Pro dan Bisnis"
-    : `Hanya tersedia di paket ${PLAN_LABEL[min]}`;
+    ? "Only available on the Pro and Business plans"
+    : `Only available on the ${PLAN_LABEL[min]} plan`;
 }
 
-// Tab Manajemen Internal yang dibuka tiap paket
-export type InternalTab = "inventaris" | "penggajian" | "pemasaran";
+// Internal Management tabs unlocked by each plan
+export type InternalTab = "inventory" | "payroll" | "marketing";
 export const INTERNAL_TAB_PLAN: Record<InternalTab, Plan> = {
-  inventaris: "gratis",
-  penggajian: "pro",
-  pemasaran: "bisnis",
+  inventory: "free",
+  payroll: "pro",
+  marketing: "business",
 };
 
-// Kuota pemakaian per paket. null = tanpa batas.
-export type QuotaKey = "scanStruk" | "konsultasi" | "eksporLaporan" | "hargaCerdas" | "aiBot";
+// Usage quota per plan. null = unlimited.
+export type QuotaKey = "receiptScan" | "consultation" | "reportExport" | "smartPricing" | "aiBot";
 
 export const QUOTA_LIMITS: Record<QuotaKey, Record<Plan, number | null>> = {
-  scanStruk: { gratis: 3, pro: 8, bisnis: 20 },
-  konsultasi: { gratis: 0, pro: 0, bisnis: 1 },
-  eksporLaporan: { gratis: 3, pro: null, bisnis: null },
-  hargaCerdas: { gratis: 0, pro: 3, bisnis: 5 },
-  aiBot: { gratis: 2, pro: 20, bisnis: null },
+  receiptScan: { free: 3, pro: 8, business: 20 },
+  consultation: { free: 0, pro: 0, business: 1 },
+  reportExport: { free: 3, pro: null, business: null },
+  smartPricing: { free: 0, pro: 3, business: 5 },
+  aiBot: { free: 2, pro: 20, business: null },
 };
 
-// Kuota "harian" terisi lagi setiap hari; kuota "total" hanya sekali pakai
-// (paket Gratis sebagai jatah coba, sesi konsultasi bisa ditambah dengan membeli).
-export type PeriodeKuota = "harian" | "total";
+// "daily" quotas refill every day; "total" quotas are one-time
+// (a trial allowance on the Free plan; consultation sessions can be topped up by purchase).
+export type QuotaPeriod = "daily" | "total";
 
-export const QUOTA_PERIODE: Record<QuotaKey, Record<Plan, PeriodeKuota>> = {
-  scanStruk: { gratis: "total", pro: "harian", bisnis: "harian" },
-  konsultasi: { gratis: "total", pro: "total", bisnis: "total" },
-  eksporLaporan: { gratis: "total", pro: "total", bisnis: "total" },
-  hargaCerdas: { gratis: "total", pro: "harian", bisnis: "harian" },
-  aiBot: { gratis: "total", pro: "harian", bisnis: "harian" },
+export const QUOTA_PERIOD: Record<QuotaKey, Record<Plan, QuotaPeriod>> = {
+  receiptScan: { free: "total", pro: "daily", business: "daily" },
+  consultation: { free: "total", pro: "total", business: "total" },
+  reportExport: { free: "total", pro: "total", business: "total" },
+  smartPricing: { free: "total", pro: "daily", business: "daily" },
+  aiBot: { free: "total", pro: "daily", business: "daily" },
 };
 
-export const PERIODE_LABEL: Record<PeriodeKuota, string> = { harian: "hari ini", total: "total" };
+export const PERIOD_LABEL: Record<QuotaPeriod, string> = { daily: "today", total: "total" };
 
 export const QUOTA_INFO: Record<QuotaKey, { label: string }> = {
-  scanStruk: { label: "Scan Struk" },
-  konsultasi: { label: "Sesi Konsultasi" },
-  eksporLaporan: { label: "Ekspor Laporan" },
-  hargaCerdas: { label: "Pencarian Smart Pricing" },
-  aiBot: { label: "Pesan AI Bot" },
+  receiptScan: { label: "Receipt Scan" },
+  consultation: { label: "Consultation Session" },
+  reportExport: { label: "Report Export" },
+  smartPricing: { label: "Smart Pricing Search" },
+  aiBot: { label: "AI Bot Message" },
 };
 
-// Pesan saat kuota habis, mengikuti periode dan paket aktif
-export function pesanKuotaHabis(q: QuotaKey, plan: Plan) {
+// Message shown when a quota runs out, based on the active period and plan
+export function quotaExhaustedMessage(q: QuotaKey, plan: Plan) {
   const label = QUOTA_INFO[q].label;
-  if (QUOTA_PERIODE[q][plan] === "harian")
-    return `Kuota ${label} hari ini habis, terisi lagi besok.${plan === "bisnis" ? "" : " Upgrade ke paket Bisnis untuk kuota lebih besar."}`;
-  return `Kuota ${label} paket ${PLAN_LABEL[plan]} sudah habis. Upgrade ke paket Pro untuk kuota harian.`;
+  if (QUOTA_PERIOD[q][plan] === "daily")
+    return `Today's ${label} quota is used up and refills tomorrow.${plan === "business" ? "" : " Upgrade to the Business plan for a larger quota."}`;
+  return `The ${PLAN_LABEL[plan]} plan's ${label} quota is used up. Upgrade to the Pro plan for a daily quota.`;
 }
 
-// Harga perkenalan 2027 (diskon 30%), harga normal berlaku mulai 2028
-export const CATATAN_HARGA = "Harga perkenalan 2027, diskon 30%";
+// 2027 introductory pricing (30% off); regular pricing applies from 2028
+export const PRICE_NOTE = "2027 introductory price, 30% off";
 
-// Sesi konsultasi tambahan, dijual terpisah dari paket
-export const PAKET_SESI = { jumlah: 2, harga: "Rp 249.000" };
+// Extra consultation sessions, sold separately from plans
+export const SESSION_PACK = { count: 2, price: "Rp 249.000" };
 
 export type PlanDef = {
   key: Plan;
-  harga: string;
-  hargaNormal?: string;
-  deskripsi: string;
-  fitur: string[];
+  price: string;
+  normalPrice?: string;
+  description: string;
+  features: string[];
 };
 
 export const PLANS: PlanDef[] = [
   {
-    key: "gratis",
-    harga: "Rp 0",
-    deskripsi: "Fitur dasar untuk mulai mencatat usaha.",
-    fitur: [
-      "Kasir POS, Bagan Akun, dan Entri Jurnal",
-      "Manajemen Internal: Persediaan",
-      "Laporan Keuangan (scan struk 3x, ekspor 3x)",
-      "UMKM Berkembang dan Permodalan (rilis 2028)",
+    key: "free",
+    price: "Rp 0",
+    description: "Core features to start recording your business.",
+    features: [
+      "POS Cashier, Chart of Accounts, and Journal Entries",
+      "Internal Management: Stock",
+      "Financial Reports (3 receipt scans, 3 exports)",
+      "MSME Growth and Funding (launching 2028)",
       "AI Bot 2x",
-      "Sesi konsultasi dijual terpisah",
+      "Consultation sessions sold separately",
     ],
   },
   {
     key: "pro",
-    harga: "Rp 105.000 / bulan",
-    hargaNormal: "Rp 150.000",
-    deskripsi: "Untuk usaha yang butuh otomatisasi harian dan analisis data.",
-    fitur: [
-      "Semua fitur Gratis",
-      "Smart Pricing 3x per hari (rilis 2028)",
-      "Manajemen Internal: Persediaan & Sumber Daya",
-      "Scan struk 8x per hari, ekspor tanpa batas",
-      "Audit Berbasis Data (rilis 2028)",
-      "Hingga 3 cabang",
-      "AI Bot 20x per hari",
-      "Sesi konsultasi dijual terpisah",
+    price: "Rp 105.000 / month",
+    normalPrice: "Rp 150.000",
+    description: "For businesses that need daily automation and data analysis.",
+    features: [
+      "Everything in Free",
+      "Smart Pricing 3x per day (launching 2028)",
+      "Internal Management: Stock & Human Resources",
+      "8 receipt scans per day, unlimited exports",
+      "Data-Driven Audit (launching 2028)",
+      "Up to 3 branches",
+      "AI Bot 20x per day",
+      "Consultation sessions sold separately",
     ],
   },
   {
-    key: "bisnis",
-    harga: "Rp 245.000 / bulan",
-    hargaNormal: "Rp 350.000",
-    deskripsi: "Paket lengkap dengan pemasaran, konsultasi, dan cabang tanpa batas.",
-    fitur: [
-      "Semua fitur Pro",
-      "Smart Pricing 5x per hari (rilis 2028)",
-      "Manajemen Internal: Persediaan, Sumber Daya & Pemasaran",
-      "Scan struk 20x per hari",
-      "Gratis 1x sesi konsultasi",
-      "Cabang tanpa batas",
-      "AI Bot tanpa batas",
+    key: "business",
+    price: "Rp 245.000 / month",
+    normalPrice: "Rp 350.000",
+    description: "The complete plan with marketing, consultation, and unlimited branches.",
+    features: [
+      "Everything in Pro",
+      "Smart Pricing 5x per day (launching 2028)",
+      "Internal Management: Stock, Human Resources & Marketing",
+      "20 receipt scans per day",
+      "1 free consultation session",
+      "Unlimited branches",
+      "Unlimited AI Bot",
     ],
   },
 ];
 
-// ---------- Cabang ----------
+// ---------- Branches ----------
 
-// Toko awal otomatis menjadi cabang ini saat usaha membuka cabang pertamanya
-export const CABANG_UTAMA = "Cabang Utama";
-export const KANTOR_PUSAT = "Kantor Pusat";
+// The original store automatically becomes this branch when the business opens its first branch
+export const MAIN_BRANCH = "Main Branch";
+export const HEAD_OFFICE = "Head Office";
 
-// Jumlah cabang baru yang boleh dibuka (di luar Cabang Utama). null = tanpa batas.
-// Pro: 3 cabang total = Cabang Utama + 2 cabang baru
-export const BATAS_CABANG: Record<Plan, number | null> = { gratis: 0, pro: 2, bisnis: null };
+// Number of new branches that may be opened (besides the Main Branch). null = unlimited.
+// Pro: 3 branches total = Main Branch + 2 new branches
+export const BRANCH_LIMIT: Record<Plan, number | null> = { free: 0, pro: 2, business: null };
 
-export type CabangInfo = { nama: string; kota: string; dibuka: string };
+export type BranchInfo = { name: string; city: string; openedAt: string };

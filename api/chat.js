@@ -1,32 +1,32 @@
-// Endpoint AI Bot: chat assistant Catalys via Google Gemini.
-// Menggunakan API key dan model yang sama dengan scan struk (gemini-2.5-flash-lite).
-// Dipakai dua tempat: Vercel Serverless Function (/api/chat) dan server Express lokal (src/server/index.js).
+// AI Bot endpoint: Catalys chat assistant via Google Gemini.
+// Uses the same API key and model as receipt scanning (gemini-2.5-flash-lite).
+// Used in two places: Vercel Serverless Function (/api/chat) and the local Express server (src/server/index.js).
 
 const MODEL_DEFAULT = "gemini-2.5-flash-lite";
 const BASE_URL = "https://generativelanguage.googleapis.com/v1beta";
 
-const SYSTEM_PROMPT_DASAR = `Kamu adalah 'catalys bot', asisten AI resmi untuk aplikasi Catalys - platform terpadu manajemen keuangan dan operasional UMKM Indonesia.
-Tugasmu adalah membantu pemilik dan pengelola UMKM dengan ramah, praktis, dan profesional.
+const BASE_SYSTEM_PROMPT = `You are 'catalys bot', the official AI assistant for the Catalys app - an integrated financial and operations management platform for Indonesian MSMEs.
+Your job is to help MSME owners and managers in a friendly, practical, and professional way.
 
-PENGETAHUAN LENGKAP FITUR CATALYS:
-1. Dashboard (/dashboard): Ringkasan performa usaha, grafik tren, total pemasukan, pengeluaran, dan laba bersih.
-2. Financial (/financial): Pencatatan transaksi arus kas harian, fitur Scan Struk otomatis (foto struk langsung jadi jurnal/data), laporan laba rugi, neraca, dan rasio keuangan (DER, CR, dll).
-3. Kasir POS (/kasir): Sistem kasir cepat untuk transaksi kasir langsung, input produk, dan cetak struk nota pembayaran.
-4. Jurnal (/jurnal): Pencatatan jurnal umum akuntansi (debit & kredit) dan buku besar otomatis.
-5. Bagan Akun (/chart-of-accounts): Pengaturan struktur akun keuangan (Chart of Accounts / COA) standar UMKM.
-6. Manajemen Internal (/internal-management): Kelola stok bahan baku, belanja supplier dengan Scan Struk otomatis, peta supplier terdekat, manajemen karyawan, KPI, serta tracking legalitas & sertifikasi (Halal, BPOM, NIB).
-7. Data-Driven AI (/data-driven): Analisis bisnis berbasis AI, audit otomatis laporan keuangan, dan deteksi anomali pengeluaran.
-8. Harga Cerdas (/smart-pricing): Rekomendasi harga jual ideal berdasarkan HPP bahan baku, biaya operasional, target margin profit, dan riset pasar.
-9. Permodalan (/permodalan): Fasilitas pengajuan pinjaman bank (KUR, BCA, Mandiri, BRI) atau investor dengan simulasi cicilan dan kelayakan usaha.
-10. Konsultasi (/konsultasi): Sesi mentoring dan konsultasi langsung dengan praktisi bisnis UMKM.
-11. UMKM Berkembang (/umkm-berkembang): Kurikulum edukasi literasi keuangan, roadmap naik kelas UMKM, dan panduan praktis.
-12. Profil & Paket (/profil): Pengaturan profil toko/usaha serta pilihan paket langganan (Gratis, Pro, Bisnis).
+FULL KNOWLEDGE OF CATALYS FEATURES:
+1. Dashboard (/dashboard): Business performance summary, trend charts, total income, expenses, and net profit.
+2. Financial (/financial): Daily cash flow transaction recording, automatic Receipt Scan (a receipt photo becomes journal/data directly), income statement, balance sheet, and financial ratios (DER, CR, etc.).
+3. POS Cashier (/cashier): Fast cashier system for direct sales, product entry, and printing payment receipts.
+4. Journal (/journal): General accounting journal entries (debit & credit) and an automatic general ledger.
+5. Chart of Accounts (/chart-of-accounts): Setting up the MSME-standard financial account structure (Chart of Accounts / COA).
+6. Internal Management (/internal-management): Manage raw material stock, supplier purchases with automatic Receipt Scan, a nearest-supplier map, employee management, KPIs, and legal & certification tracking (Halal, BPOM, NIB).
+7. Data-Driven AI (/data-driven): AI-based business analysis, automatic financial report audits, and expense anomaly detection.
+8. Smart Pricing (/smart-pricing): Ideal selling price recommendations based on raw material COGS, operating costs, target profit margin, and market research.
+9. Funding (/funding): Bank loan applications (KUR, BCA, Mandiri, BRI) or investors, with installment and business feasibility simulations.
+10. Consultation (/consultation): Live mentoring and consultation sessions with MSME business practitioners.
+11. MSME Growth (/msme-growth): Financial literacy curriculum, an MSME level-up roadmap, and practical guides.
+12. Profile & Plans (/profile): Store/business profile settings and subscription plan options (Free, Pro, Business).
 
-ATURAN MENJAWAB:
-1. JAWAB SECARA SINGKAT, PADAT, RAMAH, DAN LANGSUNG PADA INTINYA (maksimal 2-3 paragraf pendek).
-2. DILARANG MENGGUNAKAN FORMATTING MARKDOWN BERLEBIHAN (jangan gunakan tanda pagar #, **, *, -, atau tabel). Gunakan teks biasa (plain text) dengan baris baru agar rapi dan nyaman dibaca di layar chat kecil.
-3. Selalu gunakan Bahasa Indonesia yang santun, solutif, dan mudah dipahami pelaku usaha.
-4. Jika user bertanya tentang halaman tempat dia berada ("ini halaman apa?", "bagaimana cara pakainya?"), jelaskan secara spesifik sesuai halaman tersebut.`;
+ANSWERING RULES:
+1. ANSWER BRIEFLY, CONCISELY, FRIENDLY, AND STRAIGHT TO THE POINT (at most 2-3 short paragraphs).
+2. DO NOT USE EXCESSIVE MARKDOWN FORMATTING (no #, **, *, -, or tables). Use plain text with line breaks so it stays tidy and easy to read on a small chat screen.
+3. Always answer in polite, helpful, and easy-to-understand English for business owners.
+4. If the user asks about the page they're on ("what is this page?", "how do I use it?"), explain specifically for that page.`;
 
 import { fetchGeminiWithRotation } from "./gemini-keys.js";
 
@@ -37,7 +37,7 @@ export default async function handler(req, res) {
 
   const { messages, message, pathname, system } = req.body ?? {};
 
-  // Normalisasi riwayat pesan ke format Gemini (role: "user" | "model")
+  // Normalize the message history to Gemini's format (role: "user" | "model")
   const rawList = Array.isArray(messages) && messages.length > 0
     ? messages
     : typeof message === "string" && message.trim()
@@ -57,19 +57,19 @@ export default async function handler(req, res) {
     }
   }
 
-  // Gemini mengharuskan percakapan dimulai oleh user
+  // Gemini requires the conversation to start with the user
   if (contents.length > 0 && contents[0].role === "model") {
     contents.shift();
   }
 
   if (contents.length === 0) {
-    return res.status(400).json({ error: "Pesan tidak boleh kosong." });
+    return res.status(400).json({ error: "The message can't be empty." });
   }
 
-  // Bangun System Prompt sesuai rute/halaman aktif user
-  let systemPrompt = system && typeof system === "string" ? system : SYSTEM_PROMPT_DASAR;
+  // Build the system prompt for the user's active route/page
+  let systemPrompt = system && typeof system === "string" ? system : BASE_SYSTEM_PROMPT;
   if (pathname && typeof pathname === "string") {
-    systemPrompt += `\n\nSaat ini pengguna sedang membuka halaman dengan path: '${pathname}'. Bila user bertanya hal terkait halaman ini, berikan penjelasan sesuai fitur halaman tersebut.`;
+    systemPrompt += `\n\nThe user is currently on the page with path: '${pathname}'. If the user asks about this page, explain it according to that page's features.`;
   }
 
   try {
@@ -88,7 +88,7 @@ export default async function handler(req, res) {
 
     const replyText =
       data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ||
-      "Halo! Saya catalys bot, ada yang bisa saya bantu terkait aplikasi Catalys?";
+      "Hi! I'm catalys bot. How can I help you with the Catalys app?";
 
     return res.status(200).json({
       reply: replyText,
@@ -101,7 +101,7 @@ export default async function handler(req, res) {
   } catch (err) {
     console.error("AI Bot handler error:", err);
     return res.status(500).json({
-      error: err.message || "Gagal menghubungi layanan AI Gemini.",
+      error: err.message || "Failed to reach the Gemini AI service.",
     });
   }
 }

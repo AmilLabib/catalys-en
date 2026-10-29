@@ -1,289 +1,289 @@
-// Data contoh Manajemen Internal (inventaris, penggajian, pemasaran) per sektor.
-import { CABANG_UTAMA, KANTOR_PUSAT } from "../config/access";
+// Internal Management sample data (inventory, payroll, marketing) per sector.
+import { MAIN_BRANCH, HEAD_OFFICE } from "../config/access";
 import type { BusinessSector } from "../context/BusinessSectorContext";
 
 export type Supplier = { name: string; materials: string[] };
 
-type SektorMock = {
+type SectorMock = {
   wip: { name: string; qty: number; unit: string; unitCost: number }[];
   finishedGoods: { name: string; qty: number; unit: string; unitCost: number }[];
-  hppBulanIni: number;
+  cogsThisMonth: number;
   suppliers: Supplier[];
-  peran: [string, string, string, string];
-  alurBahan: Record<string, string[]>;
-  alurProduk: Record<string, string[]>;
+  roles: [string, string, string, string];
+  materialFlow: Record<string, string[]>;
+  productFlow: Record<string, string[]>;
 };
 
-export const SEKTOR: Record<BusinessSector, SektorMock> = {
-  kuliner: {
+export const SECTORS: Record<BusinessSector, SectorMock> = {
+  culinary: {
     wip: [
-      { name: "Rendang Marinasi", qty: 25, unit: "kg", unitCost: 160_000 },
-      { name: "Kaldu Dasar", qty: 40, unit: "kg", unitCost: 40_000 },
+      { name: "Marinated Rendang", qty: 25, unit: "kg", unitCost: 160_000 },
+      { name: "Base Broth", qty: 40, unit: "kg", unitCost: 40_000 },
     ],
     finishedGoods: [
-      { name: "Rendang Daging", qty: 180, unit: "porsi", unitCost: 35_000 },
-      { name: "Soto Ayam", qty: 220, unit: "porsi", unitCost: 18_000 },
+      { name: "Beef Rendang", qty: 180, unit: "servings", unitCost: 35_000 },
+      { name: "Chicken Soto", qty: 220, unit: "servings", unitCost: 18_000 },
     ],
-    hppBulanIni: 48_500_000,
+    cogsThisMonth: 48_500_000,
     suppliers: [
-      { name: "Supplier Daging A", materials: ["Daging Sapi"] },
-      { name: "Pasar Induk", materials: ["Bumbu Rempah", "Sayur Mix"] },
-      { name: "Peternak Ayam Sejahtera", materials: ["Ayam"] },
+      { name: "Meat Supplier A", materials: ["Beef"] },
+      { name: "Central Market", materials: ["Spices", "Mixed Vegetables"] },
+      { name: "Sejahtera Poultry Farm", materials: ["Chicken"] },
     ],
-    peran: ["Juru Masak", "Kasir", "Pramusaji", "Kurir"],
-    alurBahan: { "Daging Sapi": ["Rendang Marinasi"], "Bumbu Rempah": ["Rendang Marinasi", "Kaldu Dasar"], Ayam: ["Kaldu Dasar"] },
-    alurProduk: { "Rendang Marinasi": ["Rendang Daging"], "Kaldu Dasar": ["Soto Ayam"] },
+    roles: ["Cook", "Cashier", "Waiter", "Courier"],
+    materialFlow: { Beef: ["Marinated Rendang"], Spices: ["Marinated Rendang", "Base Broth"], Chicken: ["Base Broth"] },
+    productFlow: { "Marinated Rendang": ["Beef Rendang"], "Base Broth": ["Chicken Soto"] },
   },
-  agribisnis: {
-    wip: [{ name: "Pupuk Organik Fermentasi", qty: 120, unit: "karung", unitCost: 75_000 }],
-    finishedGoods: [{ name: "Sayur Segar", qty: 1200, unit: "kg", unitCost: 6_000 }],
-    hppBulanIni: 12_500_000,
+  agribusiness: {
+    wip: [{ name: "Fermented Organic Fertilizer", qty: 120, unit: "sacks", unitCost: 75_000 }],
+    finishedGoods: [{ name: "Fresh Vegetables", qty: 1200, unit: "kg", unitCost: 6_000 }],
+    cogsThisMonth: 12_500_000,
     suppliers: [
-      { name: "Kebun Mitra", materials: ["Benih", "Kompos"] },
-      { name: "Toko Tani Makmur", materials: ["Pupuk NPK", "Pestisida"] },
+      { name: "Partner Farm", materials: ["Seeds", "Compost"] },
+      { name: "Makmur Farm Store", materials: ["NPK Fertilizer", "Pesticide"] },
     ],
-    peran: ["Petani", "Staf Gudang", "Admin Penjualan", "Sopir"],
-    alurBahan: { Kompos: ["Pupuk Organik Fermentasi"], Benih: ["Pupuk Organik Fermentasi"] },
-    alurProduk: { "Pupuk Organik Fermentasi": ["Sayur Segar"] },
+    roles: ["Farmer", "Warehouse Staff", "Sales Admin", "Driver"],
+    materialFlow: { Compost: ["Fermented Organic Fertilizer"], Seeds: ["Fermented Organic Fertilizer"] },
+    productFlow: { "Fermented Organic Fertilizer": ["Fresh Vegetables"] },
   },
   fashion: {
-    wip: [{ name: "Kain Batik Potong", qty: 60, unit: "meter", unitCost: 45_000 }],
-    finishedGoods: [{ name: "Kemeja Batik", qty: 300, unit: "pcs", unitCost: 85_000 }],
-    hppBulanIni: 22_000_000,
+    wip: [{ name: "Cut Batik Fabric", qty: 60, unit: "meters", unitCost: 45_000 }],
+    finishedGoods: [{ name: "Batik Shirt", qty: 300, unit: "pcs", unitCost: 85_000 }],
+    cogsThisMonth: 22_000_000,
     suppliers: [
-      { name: "Konveksi Jaya", materials: ["Kain", "Resleting"] },
-      { name: "Toko Kemasan Rapi", materials: ["Kemasan"] },
+      { name: "Jaya Garment", materials: ["Fabric", "Zippers"] },
+      { name: "Rapi Packaging Store", materials: ["Packaging"] },
     ],
-    peran: ["Penjahit", "Staf Toko", "Admin Daring", "Desainer"],
-    alurBahan: { Kain: ["Kain Batik Potong"], Resleting: ["Kain Batik Potong"] },
-    alurProduk: { "Kain Batik Potong": ["Kemeja Batik"] },
+    roles: ["Tailor", "Store Staff", "Online Admin", "Designer"],
+    materialFlow: { Fabric: ["Cut Batik Fabric"], Zippers: ["Cut Batik Fabric"] },
+    productFlow: { "Cut Batik Fabric": ["Batik Shirt"] },
   },
-  industri: {
-    wip: [{ name: "Campuran Pakan", qty: 400, unit: "kg", unitCost: 12_000 }],
-    finishedGoods: [{ name: "Pakan Ternak Kemasan", qty: 1200, unit: "karung", unitCost: 45_000 }],
-    hppBulanIni: 142_000_000,
+  manufacturing: {
+    wip: [{ name: "Feed Mix", qty: 400, unit: "kg", unitCost: 12_000 }],
+    finishedGoods: [{ name: "Packaged Livestock Feed", qty: 1200, unit: "sacks", unitCost: 45_000 }],
+    cogsThisMonth: 142_000_000,
     suppliers: [
-      { name: "Pabrik Jagung Nusantara", materials: ["Jagung Giling"] },
-      { name: "Distributor Vitamin Ternak", materials: ["Premix Vitamin"] },
+      { name: "Nusantara Corn Mill", materials: ["Ground Corn"] },
+      { name: "Livestock Vitamin Distributor", materials: ["Vitamin Premix"] },
     ],
-    peran: ["Operator Produksi", "Staf QC", "Staf Gudang", "Sopir"],
-    alurBahan: { "Jagung Giling": ["Campuran Pakan"], "Premix Vitamin": ["Campuran Pakan"] },
-    alurProduk: { "Campuran Pakan": ["Pakan Ternak Kemasan"] },
+    roles: ["Production Operator", "QC Staff", "Warehouse Staff", "Driver"],
+    materialFlow: { "Ground Corn": ["Feed Mix"], "Vitamin Premix": ["Feed Mix"] },
+    productFlow: { "Feed Mix": ["Packaged Livestock Feed"] },
   },
-  perdagangan: {
+  trade: {
     wip: [],
-    finishedGoods: [{ name: "Paket Sembako", qty: 900, unit: "paket", unitCost: 25_000 }],
-    hppBulanIni: 32_000_000,
+    finishedGoods: [{ name: "Staple Food Package", qty: 900, unit: "packages", unitCost: 25_000 }],
+    cogsThisMonth: 32_000_000,
     suppliers: [
-      { name: "Distributor Sentral", materials: ["Barang Konsumsi"] },
-      { name: "Agen Beras Cianjur", materials: ["Beras"] },
+      { name: "Sentral Distributor", materials: ["Consumer Goods"] },
+      { name: "Cianjur Rice Agent", materials: ["Rice"] },
     ],
-    peran: ["Kasir", "Pramuniaga", "Staf Gudang", "Kurir"],
-    alurBahan: {},
-    alurProduk: {},
+    roles: ["Cashier", "Shop Assistant", "Warehouse Staff", "Courier"],
+    materialFlow: {},
+    productFlow: {},
   },
 };
 
-// ---------- Penggajian & KPI ----------
+// ---------- Payroll & KPIs ----------
 
-export type KpiKaryawan = {
+export type EmployeeKpi = {
   id: string;
-  nama: string;
+  name: string;
   target: number;
-  capaian: number;
-  satuan: string;
-  bobot: number; // persen, total semua KPI idealnya 100
+  achieved: number;
+  unit: string;
+  weight: number; // percent, all KPIs should ideally total 100
 };
 
-export type Karyawan = {
+export type Employee = {
   id: string;
-  nama: string;
-  jabatan: string;
-  unit: string; // "Kantor Pusat" atau nama cabang
-  foto: string;
-  gajiPokok: number;
-  tunjangan: number;
-  lembur: number;
-  kinerja: number; // 0-100
-  kehadiran: number; // 0-100 (% hari hadir tepat waktu)
-  target: number; // 0-120 (% capaian KPI tertimbang), dihitung dari kpi
-  telepon: string;
-  masuk: string; // jam masuk hari ini, "" = belum hadir
-  pulang: string;
-  kpi: KpiKaryawan[];
+  name: string;
+  position: string;
+  unit: string; // "Head Office" or a branch name
+  photo: string;
+  baseSalary: number;
+  allowance: number;
+  overtime: number;
+  performance: number; // 0-100
+  attendance: number; // 0-100 (% of days present on time)
+  target: number; // 0-120 (% weighted KPI achievement), computed from kpi
+  phone: string;
+  checkIn: string; // today's check-in time, "" = not present yet
+  checkOut: string;
+  kpi: EmployeeKpi[];
 };
 
-export { KANTOR_PUSAT };
+export { HEAD_OFFICE };
 
-// Unit kerja: tanpa cabang hanya toko awal; setelah ada cabang = Kantor Pusat + semua cabang
-export function unitKerja(cabang: string[]) {
-  return cabang.length ? [KANTOR_PUSAT, ...cabang] : [CABANG_UTAMA];
+// Work units: without branches only the original store; once there are branches = Head Office + all branches
+export function workUnits(branches: string[]) {
+  return branches.length ? [HEAD_OFFICE, ...branches] : [MAIN_BRANCH];
 }
 
-const NAMA_L = ["Budi Santoso", "Andi Wijaya", "Dimas Prakoso", "Fajar Nugraha", "Rahmat Hasan", "Agus Setiawan", "Hendra Gunawan", "Yusuf Hidayat", "Rizky Pratama", "Bayu Saputra", "Arief Kurniawan", "Galih Ramadhan", "Wahyu Firmansyah", "Ilham Maulana", "Taufik Hidayat", "Eko Prasetyo"];
-const NAMA_P = ["Siti Aminah", "Rina Lestari", "Maya Sari", "Lia Kurniawati", "Nur Aisyah", "Ratna Dewi", "Dewi Anggraini", "Putri Ayu", "Fitri Handayani", "Indah Permata", "Sari Wulandari", "Anisa Rahma", "Yuni Astuti", "Nadia Safitri", "Melati Kusuma", "Tari Oktaviani"];
-const JABATAN_PUSAT = ["Manajer Operasional", "Staf Keuangan", "Staf SDM"];
-const FOTO_L = [32, 45, 12, 75, 22, 36, 51, 68, 15, 83, 41, 57, 3, 27, 64, 90];
-const FOTO_P = [44, 65, 21, 33, 57, 79, 12, 90, 8, 26, 49, 71, 3, 37, 62, 85];
+const MALE_NAMES = ["Budi Santoso", "Andi Wijaya", "Dimas Prakoso", "Fajar Nugraha", "Rahmat Hasan", "Agus Setiawan", "Hendra Gunawan", "Yusuf Hidayat", "Rizky Pratama", "Bayu Saputra", "Arief Kurniawan", "Galih Ramadhan", "Wahyu Firmansyah", "Ilham Maulana", "Taufik Hidayat", "Eko Prasetyo"];
+const FEMALE_NAMES = ["Siti Aminah", "Rina Lestari", "Maya Sari", "Lia Kurniawati", "Nur Aisyah", "Ratna Dewi", "Dewi Anggraini", "Putri Ayu", "Fitri Handayani", "Indah Permata", "Sari Wulandari", "Anisa Rahma", "Yuni Astuti", "Nadia Safitri", "Melati Kusuma", "Tari Oktaviani"];
+const HEAD_OFFICE_POSITIONS = ["Operations Manager", "Finance Staff", "HR Staff"];
+const MALE_PHOTOS = [32, 45, 12, 75, 22, 36, 51, 68, 15, 83, 41, 57, 3, 27, 64, 90];
+const FEMALE_PHOTOS = [44, 65, 21, 33, 57, 79, 12, 90, 8, 26, 49, 71, 3, 37, 62, 85];
 
-// Angka semu yang stabil per indeks agar data contoh selalu sama
-const semu = (i: number, k: number) => {
+// Stable pseudo-random numbers per index so sample data is always the same
+const pseudo = (i: number, k: number) => {
   const x = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453;
   return x - Math.floor(x);
 };
-const hashTeks = (t: string) => Array.from(t).reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
+const hashText = (t: string) => Array.from(t).reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7);
 const slug = (t: string) => t.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 
-// Kehadiran dihitung dari jam masuk/pulang, sisanya dari KPI
-export function progresKpi(kpi: KpiKaryawan[]) {
-  const totalBobot = kpi.reduce((s, x) => s + x.bobot, 0) || 1;
-  const nilai = kpi.reduce((s, x) => s + Math.min(1.2, x.capaian / (x.target || 1)) * x.bobot, 0);
-  return Math.round((nilai / totalBobot) * 100);
+// Attendance is computed from check-in/out times, the rest from KPIs
+export function kpiProgress(kpi: EmployeeKpi[]) {
+  const totalWeight = kpi.reduce((s, x) => s + x.weight, 0) || 1;
+  const score = kpi.reduce((s, x) => s + Math.min(1.2, x.achieved / (x.target || 1)) * x.weight, 0);
+  return Math.round((score / totalWeight) * 100);
 }
 
-function kpiAwal(i: number, pusat: boolean, hadir: number): KpiKaryawan[] {
-  const capai = (t: number, min: number, rentang: number) => Math.round(t * (min + semu(i, t) * rentang) * 10) / 10;
-  const daftar: Omit<KpiKaryawan, "id">[] = pusat
+function initialKpi(i: number, headOffice: boolean, present: number): EmployeeKpi[] {
+  const achieve = (t: number, min: number, range: number) => Math.round(t * (min + pseudo(i, t) * range) * 10) / 10;
+  const list: Omit<EmployeeKpi, "id">[] = headOffice
     ? [
-        { nama: "Laporan selesai tepat waktu", target: 12, capaian: capai(12, 0.75, 0.3), satuan: "laporan", bobot: 40 },
-        { nama: "Kehadiran tepat waktu", target: 100, capaian: hadir, satuan: "%", bobot: 30 },
-        { nama: "Inisiatif efisiensi biaya", target: 4, capaian: Math.round(capai(4, 0.5, 0.8)), satuan: "program", bobot: 30 },
+        { name: "Reports completed on time", target: 12, achieved: achieve(12, 0.75, 0.3), unit: "reports", weight: 40 },
+        { name: "On-time attendance", target: 100, achieved: present, unit: "%", weight: 30 },
+        { name: "Cost efficiency initiatives", target: 4, achieved: Math.round(achieve(4, 0.5, 0.8)), unit: "programs", weight: 30 },
       ]
     : [
-        { nama: "Target penjualan bulanan", target: 60, capaian: capai(60, 0.75, 0.4), satuan: "juta Rp", bobot: 50 },
-        { nama: "Kehadiran tepat waktu", target: 100, capaian: hadir, satuan: "%", bobot: 30 },
-        { nama: "Rating pelayanan pelanggan", target: 5, capaian: Math.round((4 + semu(i, 9) * 0.9) * 10) / 10, satuan: "/5", bobot: 20 },
+        { name: "Monthly sales target", target: 60, achieved: achieve(60, 0.75, 0.4), unit: "million Rp", weight: 50 },
+        { name: "On-time attendance", target: 100, achieved: present, unit: "%", weight: 30 },
+        { name: "Customer service rating", target: 5, achieved: Math.round((4 + pseudo(i, 9) * 0.9) * 10) / 10, unit: "/5", weight: 20 },
       ];
-  return daftar.map((x, j) => ({ ...x, id: `kpi-${i + 1}-${j + 1}` }));
+  return list.map((x, j) => ({ ...x, id: `kpi-${i + 1}-${j + 1}` }));
 }
 
-// Karyawan contoh per unit kerja: Kantor Pusat 3 staf, Cabang Utama 4 orang, cabang lain 3 orang.
-// ID stabil per unit sehingga data yang sudah diubah pengguna tetap cocok saat cabang bertambah.
-export function karyawanSektor(sector: BusinessSector, units: string[] = [CABANG_UTAMA]): Karyawan[] {
-  const peran = SEKTOR[sector].peran;
-  const hasil: Karyawan[] = [];
-  const dipakai = new Set<string>();
+// Sample employees per work unit: Head Office 3 staff, Main Branch 4 people, other branches 3 people.
+// IDs are stable per unit so data the user has edited still matches as branches are added.
+export function sectorEmployees(sector: BusinessSector, units: string[] = [MAIN_BRANCH]): Employee[] {
+  const roles = SECTORS[sector].roles;
+  const result: Employee[] = [];
+  const used = new Set<string>();
   units.forEach((unit) => {
-    const pusat = unit === KANTOR_PUSAT;
-    const jumlah = pusat ? 3 : unit === CABANG_UTAMA ? 4 : 3;
-    const hu = hashTeks(unit);
-    for (let j = 0; j < jumlah; j++) {
+    const headOffice = unit === HEAD_OFFICE;
+    const count = headOffice ? 3 : unit === MAIN_BRANCH ? 4 : 3;
+    const hu = hashText(unit);
+    for (let j = 0; j < count; j++) {
       const i = (hu % 997) + j * 13;
-      const pria = (hu + j) % 2 === 0;
-      const kolam = pria ? NAMA_L : NAMA_P;
-      let n = (hu + j * 5) % kolam.length;
-      while (dipakai.has(kolam[n])) n = (n + 1) % kolam.length;
-      dipakai.add(kolam[n]);
-      const hadir = Math.round(82 + semu(i, 5) * 18);
-      const kpi = kpiAwal(i, pusat, hadir);
-      const gajiPokok = pusat ? [6_500_000, 4_800_000, 4_600_000][j] : [4_200_000, 3_600_000, 3_400_000, 3_300_000][j % 4];
-      const belumHadir = semu(i, 8) < 0.12;
-      const m = Math.round(-12 + semu(i, 3) * 30); // menit relatif terhadap 08:00
-      const foto = pria ? FOTO_L[(hu + j) % FOTO_L.length] : FOTO_P[(hu + j) % FOTO_P.length];
-      hasil.push({
-        id: `kry-${slug(unit)}-${j + 1}`,
-        nama: kolam[n],
-        jabatan: pusat ? JABATAN_PUSAT[j] : peran[j % 4],
+      const male = (hu + j) % 2 === 0;
+      const pool = male ? MALE_NAMES : FEMALE_NAMES;
+      let n = (hu + j * 5) % pool.length;
+      while (used.has(pool[n])) n = (n + 1) % pool.length;
+      used.add(pool[n]);
+      const present = Math.round(82 + pseudo(i, 5) * 18);
+      const kpi = initialKpi(i, headOffice, present);
+      const baseSalary = headOffice ? [6_500_000, 4_800_000, 4_600_000][j] : [4_200_000, 3_600_000, 3_400_000, 3_300_000][j % 4];
+      const notYetPresent = pseudo(i, 8) < 0.12;
+      const m = Math.round(-12 + pseudo(i, 3) * 30); // minutes relative to 08:00
+      const photo = male ? MALE_PHOTOS[(hu + j) % MALE_PHOTOS.length] : FEMALE_PHOTOS[(hu + j) % FEMALE_PHOTOS.length];
+      result.push({
+        id: `emp-${slug(unit)}-${j + 1}`,
+        name: pool[n],
+        position: headOffice ? HEAD_OFFICE_POSITIONS[j] : roles[j % 4],
         unit,
-        foto: `https://randomuser.me/api/portraits/${pria ? "men" : "women"}/${foto}.jpg`,
-        gajiPokok,
-        tunjangan: Math.round((gajiPokok * 0.13) / 50_000) * 50_000,
-        lembur: Math.round((semu(i, 6) * 500_000) / 50_000) * 50_000,
-        kinerja: Math.round(70 + semu(i, 7) * 26),
-        kehadiran: hadir,
-        target: progresKpi(kpi),
-        telepon: `08${12 + (i % 8)}-${String(1000 + Math.floor(semu(i, 1) * 8999))}-${String(1000 + Math.floor(semu(i, 2) * 8999))}`,
-        masuk: belumHadir ? "" : `0${7 + (m >= 0 ? 1 : 0)}:${String((60 + m) % 60).padStart(2, "0")}`,
-        pulang: belumHadir || j % 3 === 1 ? "" : `17:${String(Math.floor(semu(i, 4) * 25)).padStart(2, "0")}`,
+        photo: `https://randomuser.me/api/portraits/${male ? "men" : "women"}/${photo}.jpg`,
+        baseSalary,
+        allowance: Math.round((baseSalary * 0.13) / 50_000) * 50_000,
+        overtime: Math.round((pseudo(i, 6) * 500_000) / 50_000) * 50_000,
+        performance: Math.round(70 + pseudo(i, 7) * 26),
+        attendance: present,
+        target: kpiProgress(kpi),
+        phone: `08${12 + (i % 8)}-${String(1000 + Math.floor(pseudo(i, 1) * 8999))}-${String(1000 + Math.floor(pseudo(i, 2) * 8999))}`,
+        checkIn: notYetPresent ? "" : `0${7 + (m >= 0 ? 1 : 0)}:${String((60 + m) % 60).padStart(2, "0")}`,
+        checkOut: notYetPresent || j % 3 === 1 ? "" : `17:${String(Math.floor(pseudo(i, 4) * 25)).padStart(2, "0")}`,
         kpi,
       });
     }
   });
-  return hasil;
+  return result;
 }
 
-// Potongan iuran BPJS bagian pekerja: Kesehatan 1%, JHT 2%, JP 1% dari gaji pokok + tunjangan tetap
-export const POTONGAN_BPJS = 0.04;
+// Employee share of BPJS contributions: Health 1%, JHT 2%, JP 1% of base salary + fixed allowance
+export const BPJS_DEDUCTION = 0.04;
 
-export function hitungGaji(k: Karyawan) {
-  const bruto = k.gajiPokok + k.tunjangan + k.lembur;
-  const potongan = Math.round((k.gajiPokok + k.tunjangan) * POTONGAN_BPJS);
-  return { bruto, potongan, neto: bruto - potongan };
+export function computePay(e: Employee) {
+  const gross = e.baseSalary + e.allowance + e.overtime;
+  const deduction = Math.round((e.baseSalary + e.allowance) * BPJS_DEDUCTION);
+  return { gross, deduction, net: gross - deduction };
 }
 
-// Skor leaderboard: kinerja 50%, kehadiran 30%, capaian target 20% (target dibatasi 100)
-export function skorKaryawan(k: Karyawan) {
-  return Math.round(k.kinerja * 0.5 + k.kehadiran * 0.3 + Math.min(100, k.target) * 0.2);
+// Leaderboard score: performance 50%, attendance 30%, target achievement 20% (target capped at 100)
+export function employeeScore(e: Employee) {
+  return Math.round(e.performance * 0.5 + e.attendance * 0.3 + Math.min(100, e.target) * 0.2);
 }
 
-export type Absensi = {
+export type Attendance = {
   name: string;
   role: string;
   date: string;
   checkIn: string;
   checkOut: string;
-  status: "Tepat waktu" | "Sedikit terlambat" | "Lebih awal";
+  status: "On time" | "Slightly late" | "Early";
 };
 
-export function absensiAwal(sector: BusinessSector): Absensi[] {
-  const peran = SEKTOR[sector].peran;
-  const hari = new Date().toISOString().slice(0, 10);
+export function initialAttendance(sector: BusinessSector): Attendance[] {
+  const roles = SECTORS[sector].roles;
+  const day = new Date().toISOString().slice(0, 10);
   return [
-    { name: "Budi Santoso", role: peran[0], date: hari, checkIn: "08:03", checkOut: "17:15", status: "Tepat waktu" },
-    { name: "Siti Aminah", role: peran[1], date: hari, checkIn: "08:10", checkOut: "17:20", status: "Sedikit terlambat" },
-    { name: "Andi Wijaya", role: peran[2], date: hari, checkIn: "07:55", checkOut: "16:50", status: "Lebih awal" },
-    { name: "Rina Lestari", role: peran[0], date: hari, checkIn: "08:05", checkOut: "17:05", status: "Tepat waktu" },
+    { name: "Budi Santoso", role: roles[0], date: day, checkIn: "08:03", checkOut: "17:15", status: "On time" },
+    { name: "Siti Aminah", role: roles[1], date: day, checkIn: "08:10", checkOut: "17:20", status: "Slightly late" },
+    { name: "Andi Wijaya", role: roles[2], date: day, checkIn: "07:55", checkOut: "16:50", status: "Early" },
+    { name: "Rina Lestari", role: roles[0], date: day, checkIn: "08:05", checkOut: "17:05", status: "On time" },
   ];
 }
 
-// ---------- Pemasaran: ulasan media sosial & e-commerce ----------
+// ---------- Marketing: social media & e-commerce reviews ----------
 
 export type Platform = "Instagram" | "TikTok" | "Shopee" | "Tokopedia";
-export type Sentimen = "positif" | "netral" | "negatif";
-export type Topik = "Rasa / Kualitas" | "Harga" | "Pengiriman" | "Pelayanan" | "Kemasan";
+export type Sentiment = "positive" | "neutral" | "negative";
+export type Topic = "Taste / Quality" | "Price" | "Delivery" | "Service" | "Packaging";
 
-export type Ulasan = {
+export type Review = {
   id: string;
   platform: Platform;
-  pengguna: string;
-  rating: number; // 1-5 (Instagram/TikTok: rating hasil konversi sentimen)
-  teks: string;
-  tanggal: string;
-  sentimen: Sentimen;
-  topik: Topik[];
+  user: string;
+  rating: number; // 1-5 (Instagram/TikTok: rating converted from sentiment)
+  text: string;
+  date: string;
+  sentiment: Sentiment;
+  topics: Topic[];
 };
 
-const ULASAN_DASAR: Omit<Ulasan, "id" | "tanggal">[] = [
-  { platform: "Shopee", pengguna: "dian***", rating: 5, teks: "Barang sesuai foto, kualitasnya bagus banget. Pasti order lagi!", sentimen: "positif", topik: ["Rasa / Kualitas"] },
-  { platform: "Shopee", pengguna: "arif_k", rating: 2, teks: "Pengiriman lama sekali, hampir seminggu baru sampai.", sentimen: "negatif", topik: ["Pengiriman"] },
-  { platform: "Shopee", pengguna: "nina.s", rating: 4, teks: "Harga bersahabat, kemasan rapi. Kurirnya agak telat.", sentimen: "positif", topik: ["Harga", "Kemasan", "Pengiriman"] },
-  { platform: "Shopee", pengguna: "bagas99", rating: 3, teks: "Lumayan, tapi kemasannya sedikit penyok waktu datang.", sentimen: "netral", topik: ["Kemasan"] },
-  { platform: "Tokopedia", pengguna: "Rudi H.", rating: 5, teks: "Respon penjual cepat dan ramah, produk original.", sentimen: "positif", topik: ["Pelayanan", "Rasa / Kualitas"] },
-  { platform: "Tokopedia", pengguna: "Melati", rating: 4, teks: "Harga lebih murah dari toko lain, worth it.", sentimen: "positif", topik: ["Harga"] },
-  { platform: "Tokopedia", pengguna: "Yoga P.", rating: 2, teks: "Barang datang tidak lengkap, harus komplain dulu.", sentimen: "negatif", topik: ["Pelayanan", "Pengiriman"] },
-  { platform: "Instagram", pengguna: "@kulinerhunter.id", rating: 5, teks: "Wajib coba! Rasanya juara, porsinya juga pas.", sentimen: "positif", topik: ["Rasa / Kualitas"] },
-  { platform: "Instagram", pengguna: "@sarahkitchen", rating: 4, teks: "Kemasannya cantik, cocok buat hampers.", sentimen: "positif", topik: ["Kemasan"] },
-  { platform: "Instagram", pengguna: "@budget.mama", rating: 3, teks: "Enak sih, cuma harganya naik dibanding bulan lalu.", sentimen: "netral", topik: ["Harga"] },
-  { platform: "TikTok", pengguna: "@reviewjujur", rating: 5, teks: "Viral bukan kaleng-kaleng, sesuai ekspektasi!", sentimen: "positif", topik: ["Rasa / Kualitas"] },
-  { platform: "TikTok", pengguna: "@anakkos.hemat", rating: 4, teks: "Murah meriah buat anak kos, recommended.", sentimen: "positif", topik: ["Harga"] },
-  { platform: "TikTok", pengguna: "@keluhan.ku", rating: 1, teks: "Admin tidak balas chat, pesanan dibatalkan sepihak.", sentimen: "negatif", topik: ["Pelayanan"] },
-  { platform: "Shopee", pengguna: "fitri_a", rating: 5, teks: "Packing aman pakai bubble wrap, mantap.", sentimen: "positif", topik: ["Kemasan"] },
-  { platform: "Tokopedia", pengguna: "Hendra", rating: 3, teks: "Produk oke, pengiriman standar.", sentimen: "netral", topik: ["Rasa / Kualitas", "Pengiriman"] },
+const BASE_REVIEWS: Omit<Review, "id" | "date">[] = [
+  { platform: "Shopee", user: "dian***", rating: 5, text: "Item matches the photos, really great quality. Will definitely order again!", sentiment: "positive", topics: ["Taste / Quality"] },
+  { platform: "Shopee", user: "arif_k", rating: 2, text: "Delivery took forever, almost a week to arrive.", sentiment: "negative", topics: ["Delivery"] },
+  { platform: "Shopee", user: "nina.s", rating: 4, text: "Friendly price, neat packaging. The courier was a bit late.", sentiment: "positive", topics: ["Price", "Packaging", "Delivery"] },
+  { platform: "Shopee", user: "bagas99", rating: 3, text: "Not bad, but the packaging was a little dented on arrival.", sentiment: "neutral", topics: ["Packaging"] },
+  { platform: "Tokopedia", user: "Rudi H.", rating: 5, text: "Seller replied fast and was friendly, original product.", sentiment: "positive", topics: ["Service", "Taste / Quality"] },
+  { platform: "Tokopedia", user: "Melati", rating: 4, text: "Cheaper than other stores, worth it.", sentiment: "positive", topics: ["Price"] },
+  { platform: "Tokopedia", user: "Yoga P.", rating: 2, text: "Order arrived incomplete, had to file a complaint first.", sentiment: "negative", topics: ["Service", "Delivery"] },
+  { platform: "Instagram", user: "@kulinerhunter.id", rating: 5, text: "A must-try! Amazing taste, and the portion is just right.", sentiment: "positive", topics: ["Taste / Quality"] },
+  { platform: "Instagram", user: "@sarahkitchen", rating: 4, text: "Beautiful packaging, perfect for gift hampers.", sentiment: "positive", topics: ["Packaging"] },
+  { platform: "Instagram", user: "@budget.mama", rating: 3, text: "Tasty, but the price went up compared to last month.", sentiment: "neutral", topics: ["Price"] },
+  { platform: "TikTok", user: "@reviewjujur", rating: 5, text: "Viral for a reason, lived up to expectations!", sentiment: "positive", topics: ["Taste / Quality"] },
+  { platform: "TikTok", user: "@anakkos.hemat", rating: 4, text: "Cheap and cheerful for students, recommended.", sentiment: "positive", topics: ["Price"] },
+  { platform: "TikTok", user: "@keluhan.ku", rating: 1, text: "Admin never replied to my chat, order cancelled unilaterally.", sentiment: "negative", topics: ["Service"] },
+  { platform: "Shopee", user: "fitri_a", rating: 5, text: "Packed safely with bubble wrap, great.", sentiment: "positive", topics: ["Packaging"] },
+  { platform: "Tokopedia", user: "Hendra", rating: 3, text: "Product is okay, standard delivery.", sentiment: "neutral", topics: ["Taste / Quality", "Delivery"] },
 ];
 
-export function ulasanAwal(): Ulasan[] {
+export function initialReviews(): Review[] {
   const now = Date.now();
-  return ULASAN_DASAR.map((u, i) => ({
-    ...u,
-    id: `ul-${i}`,
-    tanggal: new Date(now - (i * 1.7 + 0.4) * 86_400_000).toISOString().slice(0, 10),
+  return BASE_REVIEWS.map((r, i) => ({
+    ...r,
+    id: `rv-${i}`,
+    date: new Date(now - (i * 1.7 + 0.4) * 86_400_000).toISOString().slice(0, 10),
   }));
 }
 
-// Ulasan "baru" yang muncul saat tombol Ambil Ulasan Terbaru ditekan (simulasi scraping)
-export const ULASAN_BARU: Omit<Ulasan, "id" | "tanggal">[] = [
-  { platform: "Shopee", pengguna: "wulan.d", rating: 2, teks: "Kurir kedua kalinya telat, tolong ganti ekspedisi.", sentimen: "negatif", topik: ["Pengiriman"] },
-  { platform: "TikTok", pengguna: "@foodie.bdg", rating: 5, teks: "Live kemarin seru, promonya worth banget!", sentimen: "positif", topik: ["Harga", "Pelayanan"] },
-  { platform: "Instagram", pengguna: "@ibu.rumahan", rating: 4, teks: "Anak-anak suka, kualitas konsisten.", sentimen: "positif", topik: ["Rasa / Kualitas"] },
-  { platform: "Tokopedia", pengguna: "Agus S.", rating: 3, teks: "Harga naik sedikit, tapi masih oke.", sentimen: "netral", topik: ["Harga"] },
+// "New" reviews that appear when Fetch Latest Reviews is pressed (simulated scraping)
+export const NEW_REVIEWS: Omit<Review, "id" | "date">[] = [
+  { platform: "Shopee", user: "wulan.d", rating: 2, text: "Courier was late a second time, please switch shipping services.", sentiment: "negative", topics: ["Delivery"] },
+  { platform: "TikTok", user: "@foodie.bdg", rating: 5, text: "Yesterday's live stream was fun, the promo was so worth it!", sentiment: "positive", topics: ["Price", "Service"] },
+  { platform: "Instagram", user: "@ibu.rumahan", rating: 4, text: "The kids love it, consistent quality.", sentiment: "positive", topics: ["Taste / Quality"] },
+  { platform: "Tokopedia", user: "Agus S.", rating: 3, text: "Price went up a little, but still okay.", sentiment: "neutral", topics: ["Price"] },
 ];

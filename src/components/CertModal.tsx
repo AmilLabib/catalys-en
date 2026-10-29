@@ -1,6 +1,6 @@
 import type { Cert } from '../data/certifications'
 import { useNavigate } from 'react-router-dom'
-import Lapisan from "../components/Lapisan";
+import Overlay from "../components/Overlay";
 
 type Props = {
   cert: Cert | null
@@ -12,7 +12,7 @@ export default function CertModal({ cert, onClose }: Props) {
   if (!cert) return null
 
   return (
-    <Lapisan className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <Overlay className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* backdrop */}
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
 
@@ -34,12 +34,12 @@ export default function CertModal({ cert, onClose }: Props) {
 
             <div className="mt-4 space-y-4">
               <div>
-                <h3 className="font-medium">Deskripsi</h3>
+                <h3 className="font-medium">Description</h3>
                 <p className="text-sm text-gray-700 mt-1">{cert.description ?? 'No description available.'}</p>
               </div>
 
               <div>
-                <h3 className="font-medium">Cara Mendapatkan Sertifikasi Ini</h3>
+                <h3 className="font-medium">How to Get This Certification</h3>
                 <p className="text-sm text-gray-700 mt-1">{cert.howToGet ?? 'Guidance not available.'}</p>
               </div>
             </div>
@@ -52,13 +52,13 @@ export default function CertModal({ cert, onClose }: Props) {
                 }}
                 className="bg-primary text-white px-4 py-2 rounded flex items-center gap-2"
               >
-                Dapatkan dengan Catalys
+                Get it with Catalys
                 <img src="/logo.png" alt="Catalys" className="h-4" />
               </button>
             </div>
           </div>
         </div>
       </div>
-    </Lapisan>
+    </Overlay>
   )
 }

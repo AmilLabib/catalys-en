@@ -1,8 +1,8 @@
 /** @type {import('tailwindcss').Config} */
 
-// Satu skala warna untuk seluruh aplikasi: navy Catalys.
-// Keluarga warna Tailwind lain (merah, hijau, kuning, biru, dst.) dipetakan ke skala ini
-// supaya tidak ada warna di luar tone yang ditetapkan. Abu-abu netral tetap dipakai.
+// One color scale for the whole app: Catalys navy.
+// Other Tailwind color families (red, green, yellow, blue, etc.) are mapped to this scale
+// so no colors fall outside the defined tones. Neutral grays are still used.
 const NAVY = {
   50: "#f3f7fa",
   100: "#e1ecf3",

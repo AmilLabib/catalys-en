@@ -2,36 +2,36 @@ import { useId } from "react";
 import { motion } from "motion/react";
 import { Lock, type LucideIcon } from "lucide-react";
 
-// Navigasi tab berbentuk pil (gaya yang sama dengan halaman UMKM Berkembang).
-// Latar tab aktif bergeser halus ke tab yang dipilih. Tab dengan `terkunci`
-// tampil normal dengan ikon gembok; klik memanggil `onTerkunci` (mis. popup penjelasan).
+// Pill-shaped tab navigation (same style as the MSME Growth page).
+// The active tab background slides smoothly to the selected tab. Tabs with `locked`
+// render normally with a padlock icon; clicking calls `onLocked` (e.g. an explanation popup).
 export default function PillTabs<K extends string>({
   tabs,
   active,
   onChange,
-  onTerkunci,
+  onLocked,
   className = "",
 }: {
-  tabs: readonly { key: K; label: string; icon?: LucideIcon; terkunci?: string }[];
+  tabs: readonly { key: K; label: string; icon?: LucideIcon; locked?: string }[];
   active: K;
   onChange: (k: K) => void;
-  onTerkunci?: (k: K) => void;
+  onLocked?: (k: K) => void;
   className?: string;
 }) {
-  const idIndikator = useId();
+  const indicatorId = useId();
   return (
     <div className={`flex flex-wrap gap-2 ${className}`} role="tablist">
       {tabs.map((t) => {
         const Icon = t.icon;
         const on = active === t.key;
-        if (t.terkunci)
+        if (t.locked)
           return (
             <button
               key={t.key}
               role="tab"
               aria-disabled
-              title={t.terkunci}
-              onClick={() => onTerkunci?.(t.key)}
+              title={t.locked}
+              onClick={() => onLocked?.(t.key)}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-300 bg-white/80 text-sm font-medium text-gray-700 hover:bg-white"
             >
               {Icon && <Icon className="w-4 h-4" />}
@@ -51,8 +51,8 @@ export default function PillTabs<K extends string>({
           >
             {on && (
               <motion.span
-                layoutId={idIndikator}
-                className="indikator-aktif rounded-full"
+                layoutId={indicatorId}
+                className="active-indicator rounded-full"
                 transition={{ type: "spring", stiffness: 420, damping: 34 }}
               />
             )}

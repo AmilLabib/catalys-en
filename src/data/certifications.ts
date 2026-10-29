@@ -11,42 +11,42 @@ export const initialCerts: Cert[] = [
     id: 'b-corporation',
     logo: '/certificate-1.png',
     name: 'B Corporation',
-    description: 'Sertifikasi B Corporation memverifikasi bahwa sebuah perusahaan memenuhi standar tinggi dalam kinerja sosial dan lingkungan, akuntabilitas, serta transparansi.',
-    howToGet: 'Lengkapi asesmen, capai ambang skor yang ditetapkan, dan tandatangani perjanjian B Corp. Untuk organisasi yang lebih besar, bersiaplah terhadap peninjauan dokumen dan kunjungan lokasi.'
+    description: 'B Corporation certification verifies that a company meets high standards of social and environmental performance, accountability, and transparency.',
+    howToGet: 'Complete the assessment, reach the required score threshold, and sign the B Corp agreement. Larger organizations should prepare for document reviews and site visits.'
   },
   {
     id: 'gri-standards',
     logo: '/certificate-2.png',
-    name: 'Standar GRI',
-    description: 'Standar GRI menyediakan bahasa bersama global bagi organisasi untuk melaporkan dampak ekonomi, lingkungan, dan sosial mereka.',
-    howToGet: 'Adopsi pelaporan GRI dengan memetakan pengungkapan Anda ke Standar GRI dan terbitkan laporan keberlanjutan yang selaras dengan persyaratan GRI.'
+    name: 'GRI Standards',
+    description: 'The GRI Standards provide a shared global language for organizations to report their economic, environmental, and social impacts.',
+    howToGet: 'Adopt GRI reporting by mapping your disclosures to the GRI Standards and publish a sustainability report aligned with GRI requirements.'
   },
   {
     id: 'sasb',
     logo: '/certificate-3.png',
     name: 'SASB',
-    description: 'SASB berfokus pada informasi keberlanjutan yang material secara finansial bagi para investor.',
-    howToGet: 'Identifikasi topik material menggunakan SASB Materiality Map dan integrasikan pengungkapan tersebut ke dalam laporan untuk investor.'
+    description: 'SASB focuses on sustainability information that is financially material to investors.',
+    howToGet: 'Identify material topics using the SASB Materiality Map and integrate those disclosures into investor reports.'
   },
   {
     id: 'iso-50001',
     logo: '/certificate-4.png',
     name: 'ISO 50001',
-    description: 'ISO 50001 membantu organisasi meningkatkan kinerja energi, menaikkan efisiensi energi, dan mengurangi biaya.',
-    howToGet: 'Terapkan sistem manajemen energi dan dapatkan sertifikasi melalui badan sertifikasi terakreditasi setelah audit berhasil.'
+    description: 'ISO 50001 helps organizations improve energy performance, increase energy efficiency, and reduce costs.',
+    howToGet: 'Implement an energy management system and get certified by an accredited certification body after a successful audit.'
   },
   {
     id: 'FSC',
     logo: '/certificate-5.png',
     name: 'FSC',
-    description: 'FSC mensertifikasi pengelolaan hutan yang bertanggung jawab untuk mendukung manfaat lingkungan, sosial, dan ekonomi.',
-    howToGet: 'Bekerja sama dengan badan sertifikasi untuk mengaudit pengelolaan hutan atau proses rantai pasok Anda dan memenuhi persyaratan FSC.'
+    description: 'FSC certifies responsible forest management that supports environmental, social, and economic benefits.',
+    howToGet: 'Work with a certification body to audit your forest management or supply chain processes and meet FSC requirements.'
   },
   {
     id: 'fairtrade',
     logo: '/certificate-6.png',
     name: 'FairTrade',
-    description: 'Sertifikasi FairTrade memastikan harga yang adil dan kondisi kerja yang lebih baik bagi para produsen.',
-    howToGet: 'Bermitra dengan badan sertifikasi FairTrade, penuhi kriteria di seluruh rantai pasok, dan jalani audit serta perbaikan berkelanjutan.'
+    description: 'FairTrade certification ensures fair prices and better working conditions for producers.',
+    howToGet: 'Partner with a FairTrade certification body, meet the criteria across the supply chain, and undergo audits and continuous improvement.'
   },
 ]

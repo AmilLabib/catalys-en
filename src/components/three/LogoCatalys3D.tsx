@@ -2,60 +2,60 @@ import { useEffect, useMemo, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 
-// Lambang Catalys versi 3D: busur "C", batang pertumbuhan, garis tren,
-// panah naik, dan partikel data. Seluruh lambang condong mengikuti kursor.
+// 3D version of the Catalys emblem: a "C" arc, growth bars, a trend line,
+// an upward arrow, and data particles. The whole emblem tilts toward the cursor.
 
-const TINGGI_BATANG = [0.55, 0.85, 1.12, 1.45];
-const LEBAR_BATANG = 0.26;
-const JARAK_BATANG = 0.38;
-const DASAR_Y = -0.78;
-const WARNA_BATANG = ["#012a3d", "#13577d", "#2f6b8f", "#5487ab"];
+const BAR_HEIGHTS = [0.55, 0.85, 1.12, 1.45];
+const BAR_WIDTH = 0.26;
+const BAR_SPACING = 0.38;
+const BASE_Y = -0.78;
+const BAR_COLORS = ["#012a3d", "#13577d", "#2f6b8f", "#5487ab"];
 
-function xBatang(i: number) {
-  return -0.62 + i * JARAK_BATANG;
+function barX(i: number) {
+  return -0.62 + i * BAR_SPACING;
 }
 
-// Silinder tipis yang menghubungkan dua titik (ruas garis tren)
-function Ruas({ a, b }: { a: THREE.Vector3; b: THREE.Vector3 }) {
-  const { posisi, rotasi, panjang } = useMemo(() => {
-    const arah = new THREE.Vector3().subVectors(b, a);
-    const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), arah.clone().normalize());
+// Thin cylinder connecting two points (a trend line segment)
+function Segment({ a, b }: { a: THREE.Vector3; b: THREE.Vector3 }) {
+  const { position, rotation, length } = useMemo(() => {
+    const dir = new THREE.Vector3().subVectors(b, a);
+    const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
     return {
-      posisi: new THREE.Vector3().addVectors(a, b).multiplyScalar(0.5),
-      rotasi: new THREE.Euler().setFromQuaternion(q),
-      panjang: arah.length(),
+      position: new THREE.Vector3().addVectors(a, b).multiplyScalar(0.5),
+      rotation: new THREE.Euler().setFromQuaternion(q),
+      length: dir.length(),
     };
   }, [a, b]);
   return (
-    <mesh position={posisi} rotation={rotasi}>
-      <cylinderGeometry args={[0.022, 0.022, panjang, 8]} />
+    <mesh position={position} rotation={rotation}>
+      <cylinderGeometry args={[0.022, 0.022, length, 8]} />
       <meshStandardMaterial color="#13577d" metalness={0.3} roughness={0.35} />
     </mesh>
   );
 }
 
-function Batang({ i, mulai }: { i: number; mulai: number }) {
+function Bar({ i, start }: { i: number; start: number }) {
   const ref = useRef<THREE.Group>(null);
   useFrame(({ clock }) => {
     if (!ref.current) return;
-    // tumbuh bergiliran dari bawah
-    const t = THREE.MathUtils.clamp((clock.elapsedTime - mulai - i * 0.15) / 0.7, 0, 1);
+    // grow in turn from the bottom
+    const t = THREE.MathUtils.clamp((clock.elapsedTime - start - i * 0.15) / 0.7, 0, 1);
     const ease = 1 - Math.pow(1 - t, 3);
     ref.current.scale.y = Math.max(ease, 0.001);
   });
-  const h = TINGGI_BATANG[i];
+  const h = BAR_HEIGHTS[i];
   return (
-    <group ref={ref} position={[xBatang(i), DASAR_Y, 0]}>
+    <group ref={ref} position={[barX(i), BASE_Y, 0]}>
       <mesh position={[0, h / 2, 0]}>
-        <boxGeometry args={[LEBAR_BATANG, h, LEBAR_BATANG]} />
-        <meshStandardMaterial color={WARNA_BATANG[i]} metalness={0.25} roughness={0.3} />
+        <boxGeometry args={[BAR_WIDTH, h, BAR_WIDTH]} />
+        <meshStandardMaterial color={BAR_COLORS[i]} metalness={0.25} roughness={0.3} />
       </mesh>
     </group>
   );
 }
 
-// Posisi partikel dibuat sekali saat modul dimuat, menyebar di cangkang bola
-const POSISI_PARTIKEL = (() => {
+// Particle positions are created once when the module loads, spread over a spherical shell
+const PARTICLE_POSITIONS = (() => {
   const n = 420;
   const arr = new Float32Array(n * 3);
   for (let i = 0; i < n; i++) {
@@ -69,30 +69,30 @@ const POSISI_PARTIKEL = (() => {
   return arr;
 })();
 
-function Partikel() {
+function Particles() {
   const ref = useRef<THREE.Points>(null);
-  const posisi = POSISI_PARTIKEL;
+  const positions = PARTICLE_POSITIONS;
   useFrame((_, dt) => {
     if (ref.current) ref.current.rotation.y += dt * 0.06;
   });
   return (
     <points ref={ref}>
       <bufferGeometry>
-        <bufferAttribute attach="attributes-position" args={[posisi, 3]} />
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
       </bufferGeometry>
       <pointsMaterial color="#5487ab" size={0.035} sizeAttenuation transparent opacity={0.7} depthWrite={false} />
     </points>
   );
 }
 
-function Lambang({ kursor }: { kursor: React.MutableRefObject<{ x: number; y: number }> }) {
-  const grup = useRef<THREE.Group>(null);
+function Emblem({ cursor }: { cursor: React.MutableRefObject<{ x: number; y: number }> }) {
+  const group = useRef<THREE.Group>(null);
 
-  const titikTren = useMemo(
-    () => TINGGI_BATANG.map((h, i) => new THREE.Vector3(xBatang(i) - 0.12, DASAR_Y + h + 0.32, 0.18)),
+  const trendPoints = useMemo(
+    () => BAR_HEIGHTS.map((h, i) => new THREE.Vector3(barX(i) - 0.12, BASE_Y + h + 0.32, 0.18)),
     [],
   );
-  const lintasPanah = useMemo(
+  const arrowPath = useMemo(
     () =>
       new THREE.QuadraticBezierCurve3(
         new THREE.Vector3(-1.25, -0.92, 0.3),
@@ -101,28 +101,28 @@ function Lambang({ kursor }: { kursor: React.MutableRefObject<{ x: number; y: nu
       ),
     [],
   );
-  const ujungPanah = useMemo(() => {
-    const p = lintasPanah.getPoint(1);
-    const arah = lintasPanah.getTangent(1).normalize();
-    const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), arah);
-    return { posisi: p.add(arah.clone().multiplyScalar(0.12)), rotasi: new THREE.Euler().setFromQuaternion(q) };
-  }, [lintasPanah]);
+  const arrowHead = useMemo(() => {
+    const p = arrowPath.getPoint(1);
+    const dir = arrowPath.getTangent(1).normalize();
+    const q = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir);
+    return { position: p.add(dir.clone().multiplyScalar(0.12)), rotation: new THREE.Euler().setFromQuaternion(q) };
+  }, [arrowPath]);
 
   useFrame(({ clock }) => {
-    const g = grup.current;
+    const g = group.current;
     if (!g) return;
     const t = clock.elapsedTime;
-    // muncul membesar, lalu condong mengikuti kursor sambil melayang pelan
-    const masuk = THREE.MathUtils.clamp(t / 1.1, 0, 1);
-    g.scale.setScalar(1 - Math.pow(1 - masuk, 3));
-    g.rotation.y = THREE.MathUtils.lerp(g.rotation.y, kursor.current.x * 0.55, 0.06);
-    g.rotation.x = THREE.MathUtils.lerp(g.rotation.x, -kursor.current.y * 0.35, 0.06);
+    // scale in, then tilt toward the cursor while floating gently
+    const enter = THREE.MathUtils.clamp(t / 1.1, 0, 1);
+    g.scale.setScalar(1 - Math.pow(1 - enter, 3));
+    g.rotation.y = THREE.MathUtils.lerp(g.rotation.y, cursor.current.x * 0.55, 0.06);
+    g.rotation.x = THREE.MathUtils.lerp(g.rotation.x, -cursor.current.y * 0.35, 0.06);
     g.position.y = Math.sin(t * 1.2) * 0.06;
   });
 
   return (
-    <group ref={grup}>
-      {/* busur luar dan dalam membentuk huruf C, terbuka ke kanan */}
+    <group ref={group}>
+      {/* outer and inner arcs form the letter C, open to the right */}
       <mesh rotation={[0, 0, 0.24 * Math.PI]}>
         <torusGeometry args={[1.38, 0.13, 24, 140, 1.52 * Math.PI]} />
         <meshStandardMaterial color="#0a3f5e" metalness={0.45} roughness={0.25} />
@@ -132,26 +132,26 @@ function Lambang({ kursor }: { kursor: React.MutableRefObject<{ x: number; y: nu
         <meshStandardMaterial color="#7193ad" metalness={0.3} roughness={0.3} />
       </mesh>
 
-      {TINGGI_BATANG.map((_, i) => (
-        <Batang key={i} i={i} mulai={0.5} />
+      {BAR_HEIGHTS.map((_, i) => (
+        <Bar key={i} i={i} start={0.5} />
       ))}
 
-      {titikTren.slice(1).map((b, i) => (
-        <Ruas key={i} a={titikTren[i]} b={b} />
+      {trendPoints.slice(1).map((b, i) => (
+        <Segment key={i} a={trendPoints[i]} b={b} />
       ))}
-      {titikTren.map((p, i) => (
+      {trendPoints.map((p, i) => (
         <mesh key={i} position={p}>
           <sphereGeometry args={[0.065, 16, 16]} />
           <meshStandardMaterial color="#ffffff" emissive="#9cb2c1" emissiveIntensity={0.4} />
         </mesh>
       ))}
 
-      {/* panah pertumbuhan */}
+      {/* growth arrow */}
       <mesh>
-        <tubeGeometry args={[lintasPanah, 64, 0.075, 12, false]} />
+        <tubeGeometry args={[arrowPath, 64, 0.075, 12, false]} />
         <meshStandardMaterial color="#2f6b8f" metalness={0.35} roughness={0.25} />
       </mesh>
-      <mesh position={ujungPanah.posisi} rotation={ujungPanah.rotasi}>
+      <mesh position={arrowHead.position} rotation={arrowHead.rotation}>
         <coneGeometry args={[0.2, 0.36, 24]} />
         <meshStandardMaterial color="#5487ab" metalness={0.35} roughness={0.25} />
       </mesh>
@@ -160,15 +160,15 @@ function Lambang({ kursor }: { kursor: React.MutableRefObject<{ x: number; y: nu
 }
 
 export default function LogoCatalys3D() {
-  // posisi kursor di seluruh halaman, dinormalisasi -1..1
-  const kursor = useRef({ x: 0, y: 0 });
+  // cursor position across the whole page, normalized to -1..1
+  const cursor = useRef({ x: 0, y: 0 });
   useEffect(() => {
-    const gerak = (e: PointerEvent) => {
-      kursor.current.x = (e.clientX / window.innerWidth) * 2 - 1;
-      kursor.current.y = (e.clientY / window.innerHeight) * 2 - 1;
+    const move = (e: PointerEvent) => {
+      cursor.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      cursor.current.y = (e.clientY / window.innerHeight) * 2 - 1;
     };
-    window.addEventListener("pointermove", gerak);
-    return () => window.removeEventListener("pointermove", gerak);
+    window.addEventListener("pointermove", move);
+    return () => window.removeEventListener("pointermove", move);
   }, []);
 
   return (
@@ -176,8 +176,8 @@ export default function LogoCatalys3D() {
       <ambientLight intensity={0.65} />
       <directionalLight position={[3, 4, 5]} intensity={1.4} />
       <pointLight position={[-3, -2, 3]} intensity={12} color="#9cb2c1" />
-      <Partikel />
-      <Lambang kursor={kursor} />
+      <Particles />
+      <Emblem cursor={cursor} />
     </Canvas>
   );
 }

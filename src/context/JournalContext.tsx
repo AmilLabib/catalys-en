@@ -2,8 +2,8 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from "
 import type { Account } from "./ChartOfAccountsContext";
 import { useChartOfAccounts } from "./ChartOfAccountsContext";
 import { useAccount } from "./AccountContext";
-import { buatJurnalContoh } from "../data/jurnalContoh";
-import { CABANG_UTAMA, KANTOR_PUSAT } from "../config/access";
+import { buildSampleJournals } from "../data/sampleJournals";
+import { MAIN_BRANCH, HEAD_OFFICE } from "../config/access";
 
 export type JournalLine = {
   id: string;
@@ -17,21 +17,21 @@ export type JournalEntry = {
   date: string;
   description?: string;
   lines: JournalLine[];
-  // jurnal contoh: rincian angka model laporan, tidak diposting ulang
-  contoh?: boolean;
-  // entitas pencatat: nama cabang atau Kantor Pusat. Kosong = Cabang Utama (data sebelum ada cabang)
-  entitas?: string;
+  // sample journal: breakdown of the report model figures, not posted again
+  sample?: boolean;
+  // recording entity: branch name or Head Office. Empty = Main Branch (data from before any branch existed)
+  entity?: string;
 };
 
-export const entitasJurnal = (e: JournalEntry) => e.entitas ?? CABANG_UTAMA;
+export const journalEntity = (e: JournalEntry) => e.entity ?? MAIN_BRANCH;
 
-const STORAGE_KEY = "journals_v1";
+const STORAGE_KEY = "journals_v2";
 
 type JournalCtx = {
-  /** jurnal yang diinput pengguna (tersimpan) */
+  /** journals entered by the user (persisted) */
   entries: JournalEntry[];
-  /** jurnal pengguna milik akun aktif + jurnal contoh, terurut dari terbaru */
-  semuaJurnal: JournalEntry[];
+  /** the active account's user journals + sample journals, newest first */
+  allJournals: JournalEntry[];
   addEntry: (e: JournalEntry) => void;
   // expose the React state setter so consumers can update entries with a functional update
   setEntries: React.Dispatch<React.SetStateAction<JournalEntry[]>>;
@@ -65,29 +65,29 @@ export function JournalProvider({ children }: { children: React.ReactNode }) {
     } catch {}
   }, [entries]);
 
-  // Jurnal contoh 3 tahun untuk entitas akun yang sedang masuk
-  const { role, cabang, punyaCabang, entitasSendiri, cabangList } = useAccount();
-  const jurnalContoh = useMemo(
-    () => buatJurnalContoh(entitasSendiri, accounts),
-    // daftar cabang memengaruhi angka konsolidasi
+  // 3 years of sample journals for the signed-in account's entity
+  const { role, branch, hasBranches, ownEntity, branchList } = useAccount();
+  const sampleJournals = useMemo(
+    () => buildSampleJournals(ownEntity, accounts),
+    // the branch list affects the consolidated figures
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [entitasSendiri, accounts, cabangList.length],
+    [ownEntity, accounts, branchList.length],
   );
-  // akun cabang hanya melihat jurnalnya sendiri; akun induk melihat semua
-  const semuaJurnal = useMemo(
+  // branch accounts only see their own journals; the parent account sees all
+  const allJournals = useMemo(
     () =>
-      [...entries.filter((e) => role === "induk" || entitasJurnal(e) === cabang), ...jurnalContoh].sort((a, b) =>
+      [...entries.filter((e) => role === "parent" || journalEntity(e) === branch), ...sampleJournals].sort((a, b) =>
         a.date < b.date ? 1 : a.date > b.date ? -1 : 0,
       ),
-    [entries, jurnalContoh, role, cabang],
+    [entries, sampleJournals, role, branch],
   );
 
-  // jurnal baru diberi label entitas akun yang mencatatnya
-  const pencatat = role === "cabang" ? cabang : punyaCabang ? KANTOR_PUSAT : CABANG_UTAMA;
-  const setEntries: React.Dispatch<React.SetStateAction<JournalEntry[]>> = (ubah) =>
-    setEntriesState((lama) => {
-      const baru = typeof ubah === "function" ? ubah(lama) : ubah;
-      return baru.map((e) => (e.entitas || lama.includes(e) ? e : { ...e, entitas: pencatat }));
+  // new journals are labeled with the entity of the account recording them
+  const recorder = role === "branch" ? branch : hasBranches ? HEAD_OFFICE : MAIN_BRANCH;
+  const setEntries: React.Dispatch<React.SetStateAction<JournalEntry[]>> = (change) =>
+    setEntriesState((old) => {
+      const next = typeof change === "function" ? change(old) : change;
+      return next.map((e) => (e.entity || old.includes(e) ? e : { ...e, entity: recorder }));
     });
 
   const addEntry = (e: JournalEntry) => setEntries((s) => [e, ...s]);
@@ -96,12 +96,12 @@ export function JournalProvider({ children }: { children: React.ReactNode }) {
 
   const findCashAccount = (): Account | undefined =>
     byCode("1.1.1.01") ||
-    accounts.find((a) => a.type === "asset" && a.name.toLowerCase().includes("kas"));
+    accounts.find((a) => a.type === "asset" && a.name.toLowerCase().includes("cash"));
 
-  // Penjualan umum dicatat ke pendapatan non-anggota (akun "Anggota" khusus koperasi)
+  // General sales are recorded to non-member revenue ("Member" accounts are for cooperatives only)
   const findRevenueAccount = (): Account | undefined =>
     byCode("4.2.1.01") ||
-    accounts.find((a) => a.type === "revenue" && a.name.toLowerCase().includes("penjualan")) ||
+    accounts.find((a) => a.type === "revenue" && a.name.toLowerCase().includes("sales")) ||
     accounts.find((a) => a.type === "revenue");
 
   const addSaleFromCart = (
@@ -126,10 +126,10 @@ export function JournalProvider({ children }: { children: React.ReactNode }) {
     const revAcc = findRevenueAccount();
     const cogsAcc =
       accounts.find((a) => a.code === "5.1.1.01") ||
-      accounts.find((a) => a.name.toLowerCase().includes("harga pokok"));
+      accounts.find((a) => a.name.toLowerCase().includes("cost of goods"));
     const invAcc =
       accounts.find((a) => a.code === "1.1.4.01") ||
-      accounts.find((a) => a.name.toLowerCase().includes("persediaan"));
+      accounts.find((a) => a.name.toLowerCase().includes("inventory"));
 
     if (!cashAcc || !revAcc) {
       // cannot record without mapped accounts
@@ -137,16 +137,16 @@ export function JournalProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const ppnAcc = byCode("2.1.4.01");
-    const pakaiPpn = tax > 0 && !!ppnAcc;
+    const vatAcc = byCode("2.1.4.01");
+    const useVat = tax > 0 && !!vatAcc;
 
-    // Kas diterima = harga jual + PPN; PPN dicatat sebagai utang (PPN Keluaran)
+    // Cash received = selling price + VAT; VAT is recorded as a liability (Output VAT)
     const lines: JournalLine[] = [
       {
         id: `l-${Date.now()}-d`,
         side: "debit",
         accountId: cashAcc.id,
-        amount: total + (pakaiPpn ? tax : 0),
+        amount: total + (useVat ? tax : 0),
       },
       {
         id: `l-${Date.now()}-c`,
@@ -155,11 +155,11 @@ export function JournalProvider({ children }: { children: React.ReactNode }) {
         amount: total,
       },
     ];
-    if (pakaiPpn) {
+    if (useVat) {
       lines.push({
-        id: `l-${Date.now()}-ppn`,
+        id: `l-${Date.now()}-vat`,
         side: "credit",
-        accountId: ppnAcc!.id,
+        accountId: vatAcc!.id,
         amount: tax,
       });
     }
@@ -182,7 +182,7 @@ export function JournalProvider({ children }: { children: React.ReactNode }) {
     const entry: JournalEntry = {
       id: `sale-${Date.now()}`,
       date: new Date().toISOString().slice(0, 10),
-      description: opts.description || "Penjualan di Kasir",
+      description: opts.description || "Cashier sale",
       lines,
     };
 
@@ -193,7 +193,7 @@ export function JournalProvider({ children }: { children: React.ReactNode }) {
     <ctx.Provider
       value={{
         entries,
-        semuaJurnal,
+        allJournals,
         addEntry,
         setEntries,
         addSaleFromCart,
@@ -206,6 +206,6 @@ export function JournalProvider({ children }: { children: React.ReactNode }) {
 
 export function useJournal() {
   const c = useContext(ctx);
-  if (!c) throw new Error("useJournal harus dipakai di dalam JournalProvider");
+  if (!c) throw new Error("useJournal must be used within JournalProvider");
   return c;
 }

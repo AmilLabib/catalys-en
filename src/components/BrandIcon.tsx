@@ -2,8 +2,8 @@ import { BRAND_ICONS } from "../data/brandIcons";
 
 export type Brand = keyof typeof BRAND_ICONS | "tokopedia";
 
-// Ikon merek berwarna. Tokopedia tidak tersedia di Simple Icons, jadi
-// ditampilkan sebagai lencana huruf "T" berwarna hijau Tokopedia.
+// Colored brand icon. Tokopedia is not available in Simple Icons, so
+// it is shown as a "T" letter badge in Tokopedia green.
 export default function BrandIcon({ brand, size = 16, className = "" }: { brand: Brand; size?: number; className?: string }) {
   if (brand === "tokopedia") {
     return (

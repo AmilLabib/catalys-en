@@ -1,5 +1,5 @@
 import { Info, X } from "lucide-react";
-import Lapisan from "../components/Lapisan";
+import Overlay from "../components/Overlay";
 
 export type AccountInfo = {
   code: string;
@@ -9,8 +9,8 @@ export type AccountInfo = {
   normalBalance?: string;
 };
 
-// Tombol "i" berwarna biru yang dipakai di Bagan Akun dan Entri Jurnal
-export function InfoButton({ onClick, label = "Info akun" }: { onClick: () => void; label?: string }) {
+// Blue "i" button used in the Chart of Accounts and Journal Entries
+export function InfoButton({ onClick, label = "Account info" }: { onClick: () => void; label?: string }) {
   return (
     <button
       type="button"
@@ -35,7 +35,7 @@ export default function AccountInfoModal({
 }) {
   if (!visible || !account) return null;
   return (
-    <Lapisan className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+    <Overlay className="fixed inset-0 z-[70] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div className="relative bg-white rounded-2xl p-6 w-[min(100%,600px)] shadow-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-start justify-between gap-4">
@@ -49,25 +49,25 @@ export default function AccountInfoModal({
               </h3>
               {account.normalBalance && (
                 <p className="text-xs font-medium text-blue-700 mt-0.5">
-                  Saldo {account.normalBalance.replace("Normal:", "normal:")}
+                  {account.normalBalance.replace("Normal:", "Normal balance:")}
                 </p>
               )}
             </div>
           </div>
-          <button onClick={onClose} aria-label="Tutup" className="p-1 rounded hover:bg-gray-100 text-gray-500">
+          <button onClick={onClose} aria-label="Close" className="p-1 rounded hover:bg-gray-100 text-gray-500">
             <X className="w-5 h-5" />
           </button>
         </div>
         <p className="text-sm text-gray-700 mt-4 leading-relaxed">
-          {account.description || "Belum ada penjelasan untuk akun ini."}
+          {account.description || "No explanation for this account yet."}
         </p>
         {account.example && (
           <div className="mt-4 rounded-xl bg-blue-50 border border-blue-100 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-blue-800 mb-1">Contoh pencatatan</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-blue-800 mb-1">Recording example</p>
             <p className="text-sm text-gray-800 whitespace-pre-line">{account.example}</p>
           </div>
         )}
       </div>
-    </Lapisan>
+    </Overlay>
   );
 }

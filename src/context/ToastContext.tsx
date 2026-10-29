@@ -1,79 +1,79 @@
 import React, { createContext, useCallback, useContext, useState } from "react";
 import { CheckCircle2, AlertTriangle, Info, X, FolderDown } from "lucide-react";
 
-type ToastKind = "sukses" | "peringatan" | "info";
+type ToastKind = "success" | "warning" | "info";
 type Toast = { id: number; kind: ToastKind; text: string };
 
-// Notifikasi bergaya notifikasi sistem (mis. setelah unduhan selesai)
-export type NotifUnduhan = { judul: string; pesan: string; berkas: string[] };
-type KartuUnduhan = NotifUnduhan & { id: number; keluar: boolean };
+// Notification styled like a system notification (e.g. after a download finishes)
+export type DownloadNotice = { title: string; message: string; files: string[] };
+type DownloadCard = DownloadNotice & { id: number; leaving: boolean };
 
 type ToastCtx = {
   toast: (text: string, kind?: ToastKind) => void;
-  notifUnduhan: (n: NotifUnduhan) => void;
+  downloadNotice: (n: DownloadNotice) => void;
 };
 
 const ctx = createContext<ToastCtx | undefined>(undefined);
 
 const STYLE: Record<ToastKind, { icon: typeof Info; cls: string }> = {
-  sukses: { icon: CheckCircle2, cls: "border-emerald-200 text-emerald-800" },
-  peringatan: { icon: AlertTriangle, cls: "border-amber-200 text-amber-800" },
+  success: { icon: CheckCircle2, cls: "border-emerald-200 text-emerald-800" },
+  warning: { icon: AlertTriangle, cls: "border-amber-200 text-amber-800" },
   info: { icon: Info, cls: "border-blue-200 text-blue-800" },
 };
 
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const [unduhan, setUnduhan] = useState<KartuUnduhan[]>([]);
+  const [downloads, setDownloads] = useState<DownloadCard[]>([]);
 
   const remove = (id: number) =>
     setToasts((t) => t.filter((x) => x.id !== id));
 
-  const toast = useCallback((text: string, kind: ToastKind = "sukses") => {
+  const toast = useCallback((text: string, kind: ToastKind = "success") => {
     const id = Date.now() + Math.random();
     setToasts((t) => [...t, { id, kind, text }]);
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3500);
   }, []);
 
-  // muncul sebentar, lalu meluncur keluar sebelum dihapus
-  const tutupUnduhan = useCallback((id: number) => {
-    setUnduhan((u) => u.map((x) => (x.id === id ? { ...x, keluar: true } : x)));
-    setTimeout(() => setUnduhan((u) => u.filter((x) => x.id !== id)), 320);
+  // shows briefly, then slides out before being removed
+  const closeDownload = useCallback((id: number) => {
+    setDownloads((u) => u.map((x) => (x.id === id ? { ...x, leaving: true } : x)));
+    setTimeout(() => setDownloads((u) => u.filter((x) => x.id !== id)), 320);
   }, []);
-  const notifUnduhan = useCallback(
-    (n: NotifUnduhan) => {
+  const downloadNotice = useCallback(
+    (n: DownloadNotice) => {
       const id = Date.now() + Math.random();
-      setUnduhan((u) => [...u, { ...n, id, keluar: false }]);
-      setTimeout(() => tutupUnduhan(id), 5000);
+      setDownloads((u) => [...u, { ...n, id, leaving: false }]);
+      setTimeout(() => closeDownload(id), 5000);
     },
-    [tutupUnduhan],
+    [closeDownload],
   );
 
   return (
-    <ctx.Provider value={{ toast, notifUnduhan }}>
+    <ctx.Provider value={{ toast, downloadNotice }}>
       {children}
       <div className="fixed top-4 right-4 z-[2000] flex flex-col gap-2 w-[min(92vw,380px)]">
-        {unduhan.map((n) => (
+        {downloads.map((n) => (
           <div
             key={n.id}
             role="status"
-            className={`notif-sistem group relative flex items-start gap-3 rounded-2xl border border-white/70 bg-white/85 px-3.5 py-3 shadow-[0_18px_40px_-14px_rgba(1,42,61,0.45)] backdrop-blur-xl ${n.keluar ? "notif-sistem-keluar" : ""}`}
+            className={`system-notice group relative flex items-start gap-3 rounded-2xl border border-white/70 bg-white/85 px-3.5 py-3 shadow-[0_18px_40px_-14px_rgba(1,42,61,0.45)] backdrop-blur-xl ${n.leaving ? "system-notice-exit" : ""}`}
           >
             <span className="w-10 h-10 shrink-0 rounded-xl grad-navy flex items-center justify-center text-white shadow-md">
               <FolderDown className="w-5 h-5" />
             </span>
             <div className="min-w-0 flex-1">
               <div className="flex items-baseline justify-between gap-2">
-                <p className="text-sm font-bold text-gray-900">{n.judul}</p>
-                <span className="shrink-0 text-[11px] text-gray-400">sekarang</span>
+                <p className="text-sm font-bold text-gray-900">{n.title}</p>
+                <span className="shrink-0 text-[11px] text-gray-400">now</span>
               </div>
-              <p className="text-sm text-gray-800 leading-snug">{n.pesan}</p>
-              <p className="mt-0.5 truncate text-xs text-gray-500" title={n.berkas.join(" • ")}>
-                {n.berkas.join(" • ")}
+              <p className="text-sm text-gray-800 leading-snug">{n.message}</p>
+              <p className="mt-0.5 truncate text-xs text-gray-500" title={n.files.join(" • ")}>
+                {n.files.join(" • ")}
               </p>
             </div>
             <button
-              onClick={() => tutupUnduhan(n.id)}
-              aria-label="Tutup"
+              onClick={() => closeDownload(n.id)}
+              aria-label="Close"
               className="absolute -left-2 -top-2 hidden h-5 w-5 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500 shadow group-hover:flex"
             >
               <X className="w-3 h-3" />
@@ -91,7 +91,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               <p className="flex-1 text-gray-800">{t.text}</p>
               <button
                 onClick={() => remove(t.id)}
-                aria-label="Tutup"
+                aria-label="Close"
                 className="text-gray-400 hover:text-gray-600"
               >
                 <X className="w-4 h-4" />
@@ -106,6 +106,6 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
 export function useToast() {
   const c = useContext(ctx);
-  if (!c) throw new Error("useToast harus dipakai di dalam ToastProvider");
+  if (!c) throw new Error("useToast must be used within ToastProvider");
   return c;
 }

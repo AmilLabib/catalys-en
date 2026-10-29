@@ -7,7 +7,7 @@ import { pathToFileURL } from "node:url";
 export default defineConfig({
   plugins: [
     react(),
-    // `npm run dev` sekalian menyalakan server API Express (port 4000), tidak perlu terminal kedua
+    // `npm run dev` also starts the Express API server (port 4000), no second terminal needed
     {
       name: "server-api",
       apply: "serve",

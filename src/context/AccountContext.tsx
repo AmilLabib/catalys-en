@@ -1,160 +1,132 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import {
-  BATAS_CABANG,
-  CABANG_UTAMA,
+  BRANCH_LIMIT,
+  MAIN_BRANCH,
   FEATURES,
-  KANTOR_PUSAT,
+  HEAD_OFFICE,
   QUOTA_LIMITS,
-  QUOTA_PERIODE,
+  QUOTA_PERIOD,
   lockedMessage,
-  pesanPeran,
+  roleMessage,
   planAtLeast,
-  type CabangInfo,
+  type BranchInfo,
   type FeatureKey,
-  type PeriodeKuota,
+  type QuotaPeriod,
   type Plan,
   type QuotaKey,
   type Role,
 } from "../config/access";
-import { aturDaftarCabang, KONSOLIDASI } from "../data/laporan";
+import { setBranchList, CONSOLIDATED } from "../data/reports";
 
-// v2: model akun baru (induk + daftar cabang yang bisa dibuka sendiri)
-const STORAGE_KEY = "catalys_account_v2";
-const STORAGE_LAMA = "catalys_account_v1";
+// v3: English data model (parent + list of self-opened branches)
+const STORAGE_KEY = "catalys_account_v3";
 
 export type Profile = {
-  nama: string;
+  name: string;
   email: string;
-  telepon: string;
-  namaUsaha: string;
-  alamat: string;
-  jabatan: string;
+  phone: string;
+  businessName: string;
+  address: string;
+  position: string;
 };
 
-export type SesiKonsultasi = {
+export type ConsultationSession = {
   id: string;
-  pakar: string;
-  topik: string;
-  tanggal: string; // YYYY-MM-DD
-  jam: string;
-  mode: "Online" | "Tatap Muka";
-  catatan: string;
-  status: "Terjadwal" | "Dibatalkan";
+  expert: string;
+  topic: string;
+  date: string; // YYYY-MM-DD
+  time: string;
+  mode: "Online" | "In Person";
+  notes: string;
+  status: "Scheduled" | "Cancelled";
 };
 
-type Pemakaian = Record<QuotaKey, number>;
+type Usage = Record<QuotaKey, number>;
 
 type AccountState = {
-  akun: string; // "induk" atau nama cabang yang sedang dibuka
-  cabangList: CabangInfo[];
-  kotaUsaha: string; // lokasi toko awal (sebelum dan sesudah menjadi Cabang Utama)
-  tokoPantau: string; // cabang yang persediaannya sedang dipantau dari akun induk
-  plan: Plan; // satu langganan untuk seluruh usaha, dibeli akun induk
+  account: string; // "parent" or the name of the branch currently open
+  branchList: BranchInfo[];
+  businessCity: string; // location of the original store (before and after it becomes the Main Branch)
+  monitoredStore: string; // branch whose stock is being monitored from the parent account
+  plan: Plan; // one subscription for the whole business, bought by the parent account
   profile: Profile;
-  usage: Record<string, Pemakaian>; // pemakaian total, dihitung per akun
-  harian: { tanggal: string; usage: Record<string, Pemakaian> }; // pemakaian hari ini, per akun
-  sesiTambahan: number;
-  sesi: SesiKonsultasi[];
+  usage: Record<string, Usage>; // total usage, counted per account
+  daily: { date: string; usage: Record<string, Usage> }; // today's usage, per account
+  extraSessions: number;
+  sessions: ConsultationSession[];
 };
 
-const PEMAKAIAN_AWAL: Pemakaian = { scanStruk: 0, konsultasi: 0, eksporLaporan: 0, hargaCerdas: 0, aiBot: 0 };
+const INITIAL_USAGE: Usage = { receiptScan: 0, consultation: 0, reportExport: 0, smartPricing: 0, aiBot: 0 };
 
-// tanggal lokal YYYY-MM-DD, penanda reset kuota harian
-function hariIni() {
+// local YYYY-MM-DD date, marks the daily quota reset
+function today() {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 const DEFAULT_STATE: AccountState = {
-  akun: "induk",
-  cabangList: [],
-  kotaUsaha: "Bogor",
-  tokoPantau: CABANG_UTAMA,
-  plan: "gratis",
+  account: "parent",
+  branchList: [],
+  businessCity: "Bogor",
+  monitoredStore: MAIN_BRANCH,
+  plan: "free",
   profile: {
-    nama: "Amil Labib",
+    name: "Amil Labib",
     email: "amil@catalys.id",
-    telepon: "0812-3456-7890",
-    namaUsaha: "Catalys Demo UMKM",
-    alamat: "Jl. Pajajaran No. 12, Bogor",
-    jabatan: "Pemilik Usaha",
+    phone: "0812-3456-7890",
+    businessName: "Catalys Demo MSME",
+    address: "Jl. Pajajaran No. 12, Bogor",
+    position: "Business Owner",
   },
-  usage: { induk: { ...PEMAKAIAN_AWAL, scanStruk: 1 } },
-  harian: { tanggal: hariIni(), usage: {} },
-  sesiTambahan: 0,
-  sesi: [],
+  usage: { parent: { ...INITIAL_USAGE, receiptScan: 1 } },
+  daily: { date: today(), usage: {} },
+  extraSessions: 0,
+  sessions: [],
 };
 
-export type AlasanTerkunci = { pesan: string; jenis: "peran" | "paket"; perluPeran?: Role };
+export type LockReason = { message: string; kind: "role" | "plan"; requiredRole?: Role };
 
 type AccountCtx = Omit<AccountState, "usage"> & {
   role: Role;
-  cabang: string; // nama cabang aktif ("" di akun induk)
-  punyaCabang: boolean;
-  usage: Pemakaian; // pemakaian kuota akun aktif
-  kotaAkun: string; // kota akun aktif, untuk harga regional & supplier
-  entitasSendiri: string; // entitas laporan akun aktif
-  // toko yang data operasionalnya (produk, stok, bahan baku) sedang dipakai/dilihat
-  tokoAktif: string;
-  pantauToko: (nama: string) => void;
-  // masuk sebagai pemilik usaha (akun induk), sekaligus memilih paket
+  branch: string; // active branch name ("" on the parent account)
+  hasBranches: boolean;
+  usage: Usage; // quota usage of the active account
+  accountCity: string; // active account's city, for regional prices & suppliers
+  ownEntity: string; // active account's report entity
+  // store whose operational data (products, stock, raw materials) is being used/viewed
+  activeStore: string;
+  monitorStore: (name: string) => void;
+  // sign in as the business owner (parent account), choosing a plan at the same time
   login: (email: string, plan?: Plan) => void;
-  pindahAkun: (akun: string) => void;
-  sisaSlotCabang: () => number | null; // null = tanpa batas
-  bukaCabang: (c: { nama: string; kota: string; kotaUtama?: string }) => { ok: boolean; pesan?: string };
+  switchAccount: (account: string) => void;
+  remainingBranchSlots: () => number | null; // null = unlimited
+  openBranch: (c: { name: string; city: string; mainCity?: string }) => { ok: boolean; message?: string };
   setPlan: (plan: Plan) => boolean;
   updateProfile: (p: Partial<Profile>) => void;
   canSee: (f: FeatureKey) => boolean;
   canUse: (f: FeatureKey) => boolean;
-  // alasan fitur tidak bisa dipakai (peran lebih dulu, lalu paket), null bila bisa
-  alasanTerkunci: (f: FeatureKey) => AlasanTerkunci | null;
+  // why a feature can't be used (role first, then plan), null if it can
+  lockReason: (f: FeatureKey) => LockReason | null;
   quotaLimit: (q: QuotaKey) => number | null;
   quotaRemaining: (q: QuotaKey) => number | null;
-  quotaPeriode: (q: QuotaKey) => PeriodeKuota;
-  pakaiKuota: (q: QuotaKey, amount?: number) => boolean;
-  beliSesiTambahan: (jumlah: number) => void;
-  jadwalkanSesi: (s: Omit<SesiKonsultasi, "id" | "status">) => boolean;
-  batalkanSesi: (id: string) => void;
+  quotaPeriod: (q: QuotaKey) => QuotaPeriod;
+  consumeQuota: (q: QuotaKey, amount?: number) => boolean;
+  buyExtraSessions: (count: number) => void;
+  scheduleSession: (s: Omit<ConsultationSession, "id" | "status">) => boolean;
+  cancelSession: (id: string) => void;
 };
 
 const ctx = createContext<AccountCtx | undefined>(undefined);
-
-function migrasiProfil(p: Partial<Profile> | undefined): Profile {
-  const profil = { ...DEFAULT_STATE.profile, ...p };
-  // nama lama aplikasi
-  for (const k of Object.keys(profil) as (keyof Profile)[]) {
-    profil[k] = String(profil[k]).replace(/arthami/gi, (m: string) => (m === m.toLowerCase() ? "catalys" : "Catalys"));
-  }
-  return profil;
-}
 
 function loadState(): AccountState {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const s = JSON.parse(raw) as AccountState;
-      // data sebelum kuota harian: angka pemakaian lama tidak cocok dengan batas baru, mulai dari nol
-      // (sesi konsultasi yang sudah terjadwal tetap dihitung)
-      const usage = s.harian
-        ? s.usage
-        : Object.fromEntries(Object.entries(s.usage ?? {}).map(([k, u]) => [k, { ...PEMAKAIAN_AWAL, konsultasi: u.konsultasi ?? 0 }]));
-      return { ...DEFAULT_STATE, ...s, usage, profile: migrasiProfil(s.profile) };
-    }
-    // data model lama: pertahankan profil, paket, dan sesi; mulai lagi tanpa cabang
-    const lama = localStorage.getItem(STORAGE_LAMA);
-    if (lama) {
-      const s = JSON.parse(lama);
-      return {
-        ...DEFAULT_STATE,
-        plan: s.plan ?? DEFAULT_STATE.plan,
-        profile: migrasiProfil(s.profile),
-        usage: { induk: { ...PEMAKAIAN_AWAL, konsultasi: s.usage?.konsultasi ?? 0 } },
-        sesiTambahan: s.sesiTambahan ?? 0,
-        sesi: s.sesi ?? [],
-      };
+      return { ...DEFAULT_STATE, ...s, profile: { ...DEFAULT_STATE.profile, ...s.profile } };
     }
   } catch {
-    // abaikan, pakai default
+    // ignore, use default
   }
   return DEFAULT_STATE;
 }
@@ -166,146 +138,146 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch {
-      // abaikan
+      // ignore
     }
   }, [state]);
 
-  // daftar cabang dipakai mesin laporan; diperbarui sebelum anak-anak merender
-  aturDaftarCabang(state.cabangList.map((c) => c.nama));
+  // the branch list is used by the report engine; updated before children render
+  setBranchList(state.branchList.map((c) => c.name));
 
-  const punyaCabang = state.cabangList.length > 0;
-  const role: Role = state.akun === "induk" ? "induk" : "cabang";
-  const cabang = role === "cabang" ? state.akun : "";
-  const hari = hariIni();
-  const usageAkun = { ...PEMAKAIAN_AWAL, ...state.usage[state.akun] };
-  const usageHariIni = { ...PEMAKAIAN_AWAL, ...(state.harian.tanggal === hari ? state.harian.usage[state.akun] : undefined) };
-  const kotaAkun = role === "cabang" ? (state.cabangList.find((c) => c.nama === cabang)?.kota ?? state.kotaUsaha) : state.kotaUsaha;
-  // tanpa cabang, induk = usaha tunggal (Konsolidasi berisi Cabang Utama saja)
-  const entitasSendiri = role === "induk" ? KONSOLIDASI : cabang;
-  // cabang memakai tokonya sendiri; induk memantau salah satu cabang (awal: Cabang Utama)
-  const tokoAktif =
-    role === "cabang" ? cabang : state.cabangList.some((c) => c.nama === state.tokoPantau) ? state.tokoPantau : CABANG_UTAMA;
+  const hasBranches = state.branchList.length > 0;
+  const role: Role = state.account === "parent" ? "parent" : "branch";
+  const branch = role === "branch" ? state.account : "";
+  const day = today();
+  const accountUsage = { ...INITIAL_USAGE, ...state.usage[state.account] };
+  const todayUsage = { ...INITIAL_USAGE, ...(state.daily.date === day ? state.daily.usage[state.account] : undefined) };
+  const accountCity = role === "branch" ? (state.branchList.find((c) => c.name === branch)?.city ?? state.businessCity) : state.businessCity;
+  // without branches, parent = single business (Consolidated contains only the Main Branch)
+  const ownEntity = role === "parent" ? CONSOLIDATED : branch;
+  // a branch uses its own store; the parent monitors one of the branches (initially: Main Branch)
+  const activeStore =
+    role === "branch" ? branch : state.branchList.some((c) => c.name === state.monitoredStore) ? state.monitoredStore : MAIN_BRANCH;
 
-  // Usaha tanpa cabang: semua fitur peran terbuka di akun induk
-  const canSee = (f: FeatureKey) => (role === "induk" && !punyaCabang) || FEATURES[f].roles.includes(role);
+  // Business without branches: every role feature is open on the parent account
+  const canSee = (f: FeatureKey) => (role === "parent" && !hasBranches) || FEATURES[f].roles.includes(role);
   const canUse = (f: FeatureKey) => canSee(f) && planAtLeast(state.plan, FEATURES[f].minPlan);
-  const alasanTerkunci = (f: FeatureKey): AlasanTerkunci | null => {
-    if (!canSee(f)) return { pesan: pesanPeran(FEATURES[f].roles), jenis: "peran", perluPeran: FEATURES[f].roles[0] };
-    if (!planAtLeast(state.plan, FEATURES[f].minPlan)) return { pesan: lockedMessage(FEATURES[f].minPlan), jenis: "paket" };
+  const lockReason = (f: FeatureKey): LockReason | null => {
+    if (!canSee(f)) return { message: roleMessage(FEATURES[f].roles), kind: "role", requiredRole: FEATURES[f].roles[0] };
+    if (!planAtLeast(state.plan, FEATURES[f].minPlan)) return { message: lockedMessage(FEATURES[f].minPlan), kind: "plan" };
     return null;
   };
 
   const quotaLimit = (q: QuotaKey) => {
     const base = QUOTA_LIMITS[q][state.plan];
-    if (q === "konsultasi" && base !== null) return base + state.sesiTambahan;
+    if (q === "consultation" && base !== null) return base + state.extraSessions;
     return base;
   };
 
-  const quotaPeriode = (q: QuotaKey) => QUOTA_PERIODE[q][state.plan];
+  const quotaPeriod = (q: QuotaKey) => QUOTA_PERIOD[q][state.plan];
 
-  // pemakaian yang dihitung terhadap batas: hari ini untuk kuota harian, total untuk lainnya
-  const terpakai = (q: QuotaKey) => (quotaPeriode(q) === "harian" ? usageHariIni : usageAkun)[q];
+  // usage counted against the limit: today for daily quotas, total for the rest
+  const used = (q: QuotaKey) => (quotaPeriod(q) === "daily" ? todayUsage : accountUsage)[q];
 
   const quotaRemaining = (q: QuotaKey) => {
     const limit = quotaLimit(q);
     if (limit === null) return null;
-    return Math.max(0, limit - terpakai(q));
+    return Math.max(0, limit - used(q));
   };
 
-  // total dan hari ini dicatat bersamaan, agar pindah paket tetap memakai angka yang benar
-  const ubahPemakaian = (s: AccountState, q: QuotaKey, delta: number): AccountState => {
-    const tgl = hariIni();
-    const total = { ...PEMAKAIAN_AWAL, ...s.usage[s.akun] };
-    const harianLama = s.harian.tanggal === tgl ? s.harian.usage : {};
-    const harian = { ...PEMAKAIAN_AWAL, ...harianLama[s.akun] };
+  // total and today are recorded together so switching plans still uses the right numbers
+  const changeUsage = (s: AccountState, q: QuotaKey, delta: number): AccountState => {
+    const date = today();
+    const total = { ...INITIAL_USAGE, ...s.usage[s.account] };
+    const oldDaily = s.daily.date === date ? s.daily.usage : {};
+    const daily = { ...INITIAL_USAGE, ...oldDaily[s.account] };
     return {
       ...s,
-      usage: { ...s.usage, [s.akun]: { ...total, [q]: Math.max(0, total[q] + delta) } },
-      harian: { tanggal: tgl, usage: { ...harianLama, [s.akun]: { ...harian, [q]: Math.max(0, harian[q] + delta) } } },
+      usage: { ...s.usage, [s.account]: { ...total, [q]: Math.max(0, total[q] + delta) } },
+      daily: { date, usage: { ...oldDaily, [s.account]: { ...daily, [q]: Math.max(0, daily[q] + delta) } } },
     };
   };
 
-  const pakaiKuota = (q: QuotaKey, amount = 1) => {
+  const consumeQuota = (q: QuotaKey, amount = 1) => {
     const remaining = quotaRemaining(q);
     if (remaining !== null && remaining < amount) return false;
-    setState((s) => ubahPemakaian(s, q, amount));
+    setState((s) => changeUsage(s, q, amount));
     return true;
   };
 
-  const sisaSlotCabang = () => {
-    const batas = BATAS_CABANG[state.plan];
-    if (batas === null) return null;
-    // Cabang Utama (toko awal) tidak dihitung
-    const baru = state.cabangList.filter((c) => c.nama !== CABANG_UTAMA).length;
-    return Math.max(0, batas - baru);
+  const remainingBranchSlots = () => {
+    const limit = BRANCH_LIMIT[state.plan];
+    if (limit === null) return null;
+    // the Main Branch (original store) isn't counted
+    const added = state.branchList.filter((c) => c.name !== MAIN_BRANCH).length;
+    return Math.max(0, limit - added);
   };
 
   const value: AccountCtx = {
     ...state,
     role,
-    cabang,
-    punyaCabang,
-    usage: usageAkun,
-    kotaAkun,
-    entitasSendiri,
-    tokoAktif,
-    pantauToko: (nama) => setState((s) => ({ ...s, tokoPantau: nama })),
+    branch,
+    hasBranches,
+    usage: accountUsage,
+    accountCity,
+    ownEntity,
+    activeStore,
+    monitorStore: (name) => setState((s) => ({ ...s, monitoredStore: name })),
     login: (email, plan) =>
-      setState((s) => ({ ...s, akun: "induk", plan: plan ?? s.plan, profile: email ? { ...s.profile, email } : s.profile })),
-    pindahAkun: (akun) =>
-      setState((s) => (akun === "induk" || s.cabangList.some((c) => c.nama === akun) ? { ...s, akun } : s)),
-    sisaSlotCabang,
-    bukaCabang: ({ nama, kota, kotaUtama }) => {
-      const n = nama.trim();
-      if (role !== "induk") return { ok: false, pesan: "Hanya akun Induk yang dapat membuka cabang" };
-      if (!n) return { ok: false, pesan: "Nama cabang wajib diisi" };
-      if ([CABANG_UTAMA, KANTOR_PUSAT, KONSOLIDASI].includes(n) || state.cabangList.some((c) => c.nama.toLowerCase() === n.toLowerCase()))
-        return { ok: false, pesan: "Nama cabang sudah dipakai" };
-      const sisa = sisaSlotCabang();
-      if (sisa !== null && sisa <= 0) return { ok: false, pesan: "Batas cabang paket Anda sudah tercapai" };
-      const hari = new Date().toISOString().slice(0, 10);
+      setState((s) => ({ ...s, account: "parent", plan: plan ?? s.plan, profile: email ? { ...s.profile, email } : s.profile })),
+    switchAccount: (account) =>
+      setState((s) => (account === "parent" || s.branchList.some((c) => c.name === account) ? { ...s, account } : s)),
+    remainingBranchSlots,
+    openBranch: ({ name, city, mainCity }) => {
+      const n = name.trim();
+      if (role !== "parent") return { ok: false, message: "Only the Parent account can open branches" };
+      if (!n) return { ok: false, message: "Branch name is required" };
+      if ([MAIN_BRANCH, HEAD_OFFICE, CONSOLIDATED].includes(n) || state.branchList.some((c) => c.name.toLowerCase() === n.toLowerCase()))
+        return { ok: false, message: "Branch name is already taken" };
+      const remaining = remainingBranchSlots();
+      if (remaining !== null && remaining <= 0) return { ok: false, message: "Your plan's branch limit has been reached" };
+      const date = new Date().toISOString().slice(0, 10);
       setState((s) => {
-        // cabang pertama: toko awal ikut menjadi Cabang Utama beserta datanya
-        const utama = s.cabangList.length ? [] : [{ nama: CABANG_UTAMA, kota: kotaUtama ?? s.kotaUsaha, dibuka: hari }];
+        // first branch: the original store becomes the Main Branch along with its data
+        const main = s.branchList.length ? [] : [{ name: MAIN_BRANCH, city: mainCity ?? s.businessCity, openedAt: date }];
         return {
           ...s,
-          kotaUsaha: kotaUtama ?? s.kotaUsaha,
-          cabangList: [...s.cabangList, ...utama, { nama: n, kota, dibuka: hari }],
+          businessCity: mainCity ?? s.businessCity,
+          branchList: [...s.branchList, ...main, { name: n, city, openedAt: date }],
         };
       });
       return { ok: true };
     },
     setPlan: (plan) => {
-      // langganan hanya bisa diubah dari akun induk
-      if (role !== "induk") return false;
+      // the subscription can only be changed from the parent account
+      if (role !== "parent") return false;
       setState((s) => ({ ...s, plan }));
       return true;
     },
     updateProfile: (p) => setState((s) => ({ ...s, profile: { ...s.profile, ...p } })),
     canSee,
     canUse,
-    alasanTerkunci,
+    lockReason,
     quotaLimit,
     quotaRemaining,
-    quotaPeriode,
-    pakaiKuota,
-    beliSesiTambahan: (jumlah) => setState((s) => ({ ...s, sesiTambahan: s.sesiTambahan + jumlah })),
-    jadwalkanSesi: (sesi) => {
-      if (!pakaiKuota("konsultasi")) return false;
+    quotaPeriod,
+    consumeQuota,
+    buyExtraSessions: (count) => setState((s) => ({ ...s, extraSessions: s.extraSessions + count })),
+    scheduleSession: (session) => {
+      if (!consumeQuota("consultation")) return false;
       setState((s) => ({
         ...s,
-        sesi: [{ ...sesi, id: `sesi-${Date.now()}`, status: "Terjadwal" }, ...s.sesi],
+        sessions: [{ ...session, id: `session-${Date.now()}`, status: "Scheduled" }, ...s.sessions],
       }));
       return true;
     },
-    batalkanSesi: (id) =>
+    cancelSession: (id) =>
       setState((s) => {
-        const target = s.sesi.find((x) => x.id === id);
-        if (!target || target.status !== "Terjadwal") return s;
-        // sesi yang dibatalkan mengembalikan kuota
+        const target = s.sessions.find((x) => x.id === id);
+        if (!target || target.status !== "Scheduled") return s;
+        // a cancelled session returns the quota
         return {
-          ...ubahPemakaian(s, "konsultasi", -1),
-          sesi: s.sesi.map((x) => (x.id === id ? { ...x, status: "Dibatalkan" } : x)),
+          ...changeUsage(s, "consultation", -1),
+          sessions: s.sessions.map((x) => (x.id === id ? { ...x, status: "Cancelled" } : x)),
         };
       }),
   };
@@ -315,6 +287,6 @@ export function AccountProvider({ children }: { children: React.ReactNode }) {
 
 export function useAccount() {
   const c = useContext(ctx);
-  if (!c) throw new Error("useAccount harus dipakai di dalam AccountProvider");
+  if (!c) throw new Error("useAccount must be used within AccountProvider");
   return c;
 }

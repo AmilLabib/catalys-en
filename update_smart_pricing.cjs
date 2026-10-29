@@ -67,7 +67,7 @@ content = content.replace(
       estMonthlySales === 0
     )
       return null;
-    const totalVariable = cogsPenjualan;
+    const totalVariable = cogsOfSales;
     const allocFixedPerUnit = Number(monthlyFixed) / Number(estMonthlySales);
     return Math.max(0, totalVariable + allocFixedPerUnit);
   };`
@@ -105,7 +105,7 @@ content = content.replace(
     return dm / qty;
   }, [form.directMaterial, form.quantity]);
 
-  const cogsPenjualan = useMemo(() => {
+  const cogsOfSales = useMemo(() => {
     const dm = Number(form.directMaterial) || 0;
     const dl = Number(form.directLabor) || 0;
     const oh = form.overheads.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
@@ -115,7 +115,7 @@ content = content.replace(
 
   const breakEven = breakEvenPerUnit();
 
-  const cogsNum = cogsPenjualan;`
+  const cogsNum = cogsOfSales;`
 );
 
 content = content.replace(
@@ -205,7 +205,7 @@ const newCogsUI = `              <div className="col-span-1 md:col-span-3 grid g
                 
                 <div>
                   <label className="text-sm font-medium text-gray-700">
-                    Jumlah (Unit)
+                    Quantity (Units)
                   </label>
                   <input
                     type="number"
@@ -250,14 +250,14 @@ const newCogsUI = `              <div className="col-span-1 md:col-span-3 grid g
                       onClick={() => setForm(s => ({...s, overheads: [...s.overheads, { id: Date.now().toString(), name: "", amount: "" }]}))}
                       className="text-xs bg-primary/10 text-primary px-2 py-1 rounded hover:bg-primary/20"
                     >
-                      + Tambah Overhead
+                      + Add Overhead
                     </button>
                   </div>
                   {form.overheads.map((oh, idx) => (
                     <div key={oh.id} className="flex items-center gap-2 mt-2">
                       <input 
                         type="text" 
-                        placeholder="Nama Overhead"
+                        placeholder="Overhead Name"
                         value={oh.name}
                         onChange={(e) => {
                           const newOh = [...form.overheads];
@@ -297,8 +297,8 @@ const newCogsUI = `              <div className="col-span-1 md:col-span-3 grid g
                     <span className="font-bold text-blue-800">{formatCurrency(cogsAkuntansi)}</span>
                   </div>
                   <div className="flex flex-col text-right">
-                    <span className="text-xs text-gray-500">COGS Penjualan / unit</span>
-                    <span className="font-bold text-primary">{formatCurrency(cogsPenjualan)}</span>
+                    <span className="text-xs text-gray-500">COGS of Sales / unit</span>
+                    <span className="font-bold text-primary">{formatCurrency(cogsOfSales)}</span>
                   </div>
                 </div>
               </div>`;

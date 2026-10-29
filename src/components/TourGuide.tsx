@@ -3,136 +3,136 @@ import { useNavigate } from "react-router-dom";
 import { Rocket, PartyPopper } from "lucide-react";
 import { useAccount } from "../context/AccountContext";
 import type { FeatureKey } from "../config/access";
-import Lapisan from "../components/Lapisan";
+import Overlay from "../components/Overlay";
 
-// v2: tur disesuaikan dengan alur induk–cabang, pindah akun, notifikasi, dan laporan baru
+// v2: tour adapted to the parent–branch flow, account switching, notifications, and the new reports
 const TOUR_KEY = "tour_shown_v2";
 
-type KondisiAkun = { role: "induk" | "cabang"; punyaCabang: boolean };
+type AccountState = { role: "parent" | "branch"; hasBranches: boolean };
 
 type Step = {
   id: string;
   title: string;
-  body: string | ((k: KondisiAkun) => string);
+  body: string | ((k: AccountState) => string);
   selector?: string;
   path?: string;
-  feature?: FeatureKey; // langkah hanya muncul bila fitur bisa dipakai akun aktif
-  tampil?: (k: KondisiAkun) => boolean;
+  feature?: FeatureKey; // the step only appears if the active account can use the feature
+  show?: (k: AccountState) => boolean;
 };
 
 const ALL_STEPS: Step[] = [
   {
     id: "sidebar",
-    title: "Navigasi Utama",
-    body: "Semua modul ada di sidebar ini. Menu bergembok tetap bisa diklik: akan muncul penjelasan apakah fitur itu khusus akun Induk, akun Cabang, atau paket tertentu.",
+    title: "Main Navigation",
+    body: "Every module lives in this sidebar. Locked menus can still be clicked: you'll see whether that feature is for the Parent account, Branch accounts, or a specific plan.",
     selector: ".sidebar-root",
     path: "/dashboard",
   },
   {
-    id: "pilih-akun",
-    title: "Akun & Cabang",
+    id: "account-switcher",
+    title: "Accounts & Branches",
     body: (k) =>
-      k.role === "cabang"
-        ? "Anda sedang di akun cabang. Lewat menu ini Anda bisa kembali ke akun Induk atau pindah ke cabang lain."
-        : k.punyaCabang
-          ? "Pindah antara akun Induk (kantor pusat) dan akun tiap cabang dari menu ini. Cabang baru juga dibuka dari sini."
-          : "Usaha Anda belum punya cabang, jadi semua fitur terbuka di akun ini. Buka cabang pertama dari menu ini kapan saja.",
-    selector: "[data-tour='pilih-akun']",
+      k.role === "branch"
+        ? "You're on a branch account. Use this menu to go back to the Parent account or switch to another branch."
+        : k.hasBranches
+          ? "Switch between the Parent account (head office) and each branch account from this menu. New branches are opened from here too."
+          : "Your business has no branches yet, so every feature is open on this account. Open your first branch from this menu anytime.",
+    selector: "[data-tour='account-switcher']",
     path: "/dashboard",
   },
   {
-    id: "notifikasi",
-    title: "Notifikasi",
-    body: "Stok menipis, jadwal konsultasi, kuota yang hampir habis, hingga ulasan pelanggan muncul di sini. Klik untuk langsung membuka halamannya.",
-    selector: "[data-tour='notifikasi']",
+    id: "notifications",
+    title: "Notifications",
+    body: "Low stock, consultation schedules, quotas about to run out, and customer reviews show up here. Click one to jump straight to its page.",
+    selector: "[data-tour='notifications']",
     path: "/dashboard",
   },
   {
-    id: "beranda-kpi",
-    title: "Ringkasan Performa",
-    body: "Pendapatan, laba bersih, aset, dan kas tahun berjalan dibandingkan dengan tahun lalu.",
-    selector: "[data-tour='beranda-kpi']",
+    id: "home-kpi",
+    title: "Performance Summary",
+    body: "This year's revenue, net profit, assets, and cash compared with last year.",
+    selector: "[data-tour='home-kpi']",
     path: "/dashboard",
   },
   {
-    id: "buka-cabang",
-    title: "Siap Membuka Cabang?",
-    body: "Saat cabang pertama dibuka, toko ini otomatis menjadi Cabang Utama beserta seluruh datanya, dan akun Induk menjadi kantor pusat.",
-    selector: "[data-tour='buka-cabang']",
+    id: "open-branch",
+    title: "Ready to Open a Branch?",
+    body: "When the first branch is opened, this store automatically becomes the Main Branch with all its data, and the Parent account becomes the head office.",
+    selector: "[data-tour='open-branch']",
     path: "/dashboard",
-    tampil: (k) => k.role === "induk" && !k.punyaCabang,
+    show: (k) => k.role === "parent" && !k.hasBranches,
   },
   {
-    id: "peta-cabang",
-    title: "Peta Sebaran Cabang",
-    body: "Tinggi pilar menunjukkan porsi pendapatan tiap cabang. Klik pilar atau kartu cabang untuk melihat rinciannya.",
-    selector: "[data-tour='peta-cabang']",
+    id: "branch-map",
+    title: "Branch Map",
+    body: "Pillar height shows each branch's share of revenue. Click a pillar or branch card to see its details.",
+    selector: "[data-tour='branch-map']",
     path: "/dashboard",
-    tampil: (k) => k.role === "induk" && k.punyaCabang,
+    show: (k) => k.role === "parent" && k.hasBranches,
   },
   {
-    id: "kasir-search",
-    title: "Kasir POS",
-    body: "Cari produk lalu klik untuk menambahkannya ke keranjang. Penjualan otomatis mengurangi stok dan tercatat sebagai jurnal.",
-    selector: "input[placeholder='Cari produk...']",
-    path: "/kasir",
-    feature: "kasir",
+    id: "cashier-search",
+    title: "POS Cashier",
+    body: "Search for a product, then click it to add it to the cart. Sales automatically reduce stock and are recorded as journal entries.",
+    selector: "input[placeholder='Search products...']",
+    path: "/cashier",
+    feature: "cashier",
   },
   {
-    id: "pencatatan",
-    title: "Pencatatan Transaksi",
-    body: "Scan struk penjualan atau pembelian, atau input jurnal manual dengan templat transaksi umum. Semuanya langsung masuk ke laporan.",
-    selector: "[data-tour='pencatatan']",
+    id: "recording",
+    title: "Transaction Recording",
+    body: "Scan sales or purchase receipts, or enter manual journals with common transaction templates. Everything goes straight into the reports.",
+    selector: "[data-tour='recording']",
     path: "/financial",
-    feature: "laporanKeuangan",
+    feature: "financialReports",
   },
   {
-    id: "pengaturan-laporan",
-    title: "Periode & Ekspor",
+    id: "report-settings",
+    title: "Period & Export",
     body: (k) =>
-      `Pilih rentang tanggal laporan${k.role === "induk" && k.punyaCabang ? " dan entitasnya (konsolidasi atau per cabang)" : ""}, lalu ekspor ke Excel atau PDF.`,
-    selector: "[data-tour='pengaturan-laporan']",
+      `Choose the report date range${k.role === "parent" && k.hasBranches ? " and its entity (consolidated or per branch)" : ""}, then export to Excel or PDF.`,
+    selector: "[data-tour='report-settings']",
     path: "/financial",
-    feature: "laporanKeuangan",
+    feature: "financialReports",
   },
   {
-    id: "tab-laporan",
-    title: "Laporan SAK EMKM",
-    body: "Beralih antara Neraca, Laba Rugi, Perubahan Ekuitas, Arus Kas, dan Catatan atas Laporan Keuangan, lengkap dengan pembanding periode lalu.",
-    selector: "#tab-laporan",
+    id: "tab-reports",
+    title: "SAK EMKM Reports",
+    body: "Switch between the Balance Sheet, Income Statement, Changes in Equity, Cash Flows, and Notes to the Financial Statements, all with prior-period comparisons.",
+    selector: "#tab-reports",
     path: "/financial",
-    feature: "laporanKeuangan",
+    feature: "financialReports",
   },
   {
-    id: "grafik",
-    title: "Analisis Grafik",
-    body: "Delapan grafik untuk membaca tren laba, komposisi beban dan aset, struktur pendanaan, serta arus kas.",
-    selector: "[data-tour='grafik']",
+    id: "charts",
+    title: "Chart Analysis",
+    body: "Eight charts to read profit trends, expense and asset composition, funding structure, and cash flow.",
+    selector: "[data-tour='charts']",
     path: "/financial",
-    feature: "laporanKeuangan",
+    feature: "financialReports",
   },
   {
-    id: "peta-supplier",
-    title: "Persediaan & Supplier Terdekat",
-    body: "Pantau stok bahan baku dan temukan supplier di sekitar toko. Setelah belanja, scan struk pembelian agar stok bertambah otomatis.",
-    selector: "[data-tour='peta-supplier']",
-    path: "/internal-management?tab=inventaris",
-    feature: "manajemenInternal",
+    id: "supplier-map",
+    title: "Stock & Nearest Suppliers",
+    body: "Monitor raw material stock and find suppliers around your store. After shopping, scan the purchase receipt so stock increases automatically.",
+    selector: "[data-tour='supplier-map']",
+    path: "/internal-management?tab=inventory",
+    feature: "internalManagement",
   },
   {
-    id: "sdm",
-    title: "Sumber Daya Manusia",
-    body: "Saring karyawan per unit kerja, klik seseorang untuk mengatur KPI dan gajinya, lalu cairkan gaji per orang.",
-    selector: "[data-tour='sdm']",
-    path: "/internal-management?tab=penggajian",
-    feature: "manajemenInternal",
-    tampil: (k) => k.role === "induk",
+    id: "hr",
+    title: "Human Resources",
+    body: "Filter employees by work unit, click someone to set their KPIs and salary, then pay out salaries per person.",
+    selector: "[data-tour='hr']",
+    path: "/internal-management?tab=payroll",
+    feature: "internalManagement",
+    show: (k) => k.role === "parent",
   },
   {
     id: "audit",
-    title: "Audit Berbasis Data",
-    body: "Sistem membaca laporan, persediaan, karyawan, dan ulasan untuk menemukan risiko beserta rekomendasinya.",
-    selector: "#audit-ringkasan",
+    title: "Data-Driven Audit",
+    body: "The system reads your reports, stock, employees, and reviews to find risks along with recommendations.",
+    selector: "#audit-summary",
     path: "/data-driven",
     feature: "audit",
   },
@@ -144,13 +144,13 @@ export default function TourGuide() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [showFinished, setShowFinished] = useState(false);
   const [dontShowAgain, setDontShowAgain] = useState(false);
-  // dinaikkan untuk menghitung ulang posisi sorotan (setelah scroll/resize/elemen muncul)
+  // bumped to recompute the highlight position (after scroll/resize/element appears)
   const [, setTick] = useState(0);
   const navigate = useNavigate();
-  const { canUse, role, punyaCabang } = useAccount();
-  const kondisi: KondisiAkun = { role, punyaCabang };
-  // Langkah tur hanya untuk fitur yang bisa diakses dan relevan bagi akun saat ini
-  const STEPS = ALL_STEPS.filter((s) => (!s.feature || canUse(s.feature)) && (!s.tampil || s.tampil(kondisi)));
+  const { canUse, role, hasBranches } = useAccount();
+  const state: AccountState = { role, hasBranches };
+  // Tour steps only for features that are accessible and relevant to the current account
+  const STEPS = ALL_STEPS.filter((s) => (!s.feature || canUse(s.feature)) && (!s.show || s.show(state)));
 
   useEffect(() => {
     try {
@@ -170,12 +170,12 @@ export default function TourGuide() {
   const next = () => setStepIndex((s) => Math.min(s + 1, STEPS.length - 1));
   const prev = () => setStepIndex((s) => Math.max(s - 1, 0));
 
-  const simpanJanganTampil = () => {
+  const saveDontShow = () => {
     if (!dontShowAgain) return;
     try {
       localStorage.setItem(TOUR_KEY, "1");
     } catch {
-      // abaikan
+      // ignore
     }
   };
 
@@ -184,24 +184,24 @@ export default function TourGuide() {
     setShowFinished(false);
   };
   const finish = () => {
-    simpanJanganTampil();
+    saveDontShow();
     setShowFinished(true);
   };
   const skip = () => {
-    simpanJanganTampil();
+    saveDontShow();
     setVisible(false);
   };
 
-  // pindah halaman, tunggu elemen target muncul (halaman bisa dimuat lazy), lalu gulir ke sana
+  // change page, wait for the target element to appear (pages may be lazy-loaded), then scroll to it
   useEffect(() => {
     if (!visible || showWelcome || showFinished || !step) return;
     if (step.path) navigate(step.path);
     const sel = step.selector;
     if (!sel) return;
-    let coba = 0;
+    let tries = 0;
     const id = setInterval(() => {
       const el = document.querySelector(sel) as HTMLElement | null;
-      if (el || ++coba > 20) {
+      if (el || ++tries > 20) {
         clearInterval(id);
         el?.scrollIntoView({ behavior: "smooth", block: "center" });
         setTimeout(() => setTick((t) => t + 1), 450);
@@ -211,21 +211,21 @@ export default function TourGuide() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepIndex, visible, showWelcome, showFinished]);
 
-  // sorotan mengikuti elemen saat halaman digulir atau ukuran jendela berubah
+  // the highlight follows the element when the page scrolls or the window resizes
   useEffect(() => {
     if (!visible || showWelcome || showFinished) return;
-    const segarkan = () => setTick((t) => t + 1);
-    window.addEventListener("scroll", segarkan, true);
-    window.addEventListener("resize", segarkan);
+    const refresh = () => setTick((t) => t + 1);
+    window.addEventListener("scroll", refresh, true);
+    window.addEventListener("resize", refresh);
     return () => {
-      window.removeEventListener("scroll", segarkan, true);
-      window.removeEventListener("resize", segarkan);
+      window.removeEventListener("scroll", refresh, true);
+      window.removeEventListener("resize", refresh);
     };
   }, [visible, showWelcome, showFinished]);
 
   if (!visible || !step) return null;
 
-  const pilihanJanganTampil = (
+  const dontShowOption = (
     <label className="mt-4 flex items-center justify-center gap-2 text-sm text-gray-600 cursor-pointer select-none">
       <input
         type="checkbox"
@@ -233,13 +233,13 @@ export default function TourGuide() {
         onChange={(e) => setDontShowAgain(e.target.checked)}
         className="w-4 h-4 text-primary rounded border-gray-300 focus:ring-primary cursor-pointer"
       />
-      Jangan tampilkan lagi
+      Don't show again
     </label>
   );
 
   if (showWelcome) {
     return (
-      <Lapisan className="fixed inset-0 z-[1000] flex items-center justify-center pointer-events-auto">
+      <Overlay className="fixed inset-0 z-[1000] flex items-center justify-center pointer-events-auto">
         <div className="absolute inset-0 bg-black/40" />
         <div className="bg-white rounded-2xl p-6 shadow-xl z-10 max-w-sm w-full mx-4 relative">
           <div className="mb-4 flex justify-center">
@@ -247,35 +247,35 @@ export default function TourGuide() {
               <Rocket className="w-8 h-8" />
             </div>
           </div>
-          <h3 className="text-xl font-bold mb-2 text-center text-primary">Selamat Datang di Catalys</h3>
+          <h3 className="text-xl font-bold mb-2 text-center text-primary">Welcome to Catalys</h3>
           <p className="text-gray-600 mb-5 text-center text-sm">
-            Tur singkat {STEPS.length} langkah untuk mengenal fitur utama
-            {role === "cabang" ? " akun cabang Anda" : punyaCabang ? " akun Induk dan cabang Anda" : " usaha Anda"}.
+            A quick {STEPS.length}-step tour of the main features of
+            {role === "branch" ? " your branch account" : hasBranches ? " your Parent and branch accounts" : " your business"}.
           </p>
           <div className="flex gap-3">
             <button onClick={skip} className="flex-1 px-4 py-2 rounded-xl border border-gray-200 text-gray-600 font-medium hover:bg-gray-50 transition-colors">
-              Lewati
+              Skip
             </button>
             <button
               onClick={() => {
-                simpanJanganTampil();
+                saveDontShow();
                 setStepIndex(0);
                 setShowWelcome(false);
               }}
               className="flex-1 px-4 py-2 rounded-xl btn-gradient font-medium"
             >
-              Mulai Tur
+              Start Tour
             </button>
           </div>
-          {pilihanJanganTampil}
+          {dontShowOption}
         </div>
-      </Lapisan>
+      </Overlay>
     );
   }
 
   if (showFinished) {
     return (
-      <Lapisan className="fixed inset-0 z-[1000] flex items-center justify-center pointer-events-auto">
+      <Overlay className="fixed inset-0 z-[1000] flex items-center justify-center pointer-events-auto">
         <div className="absolute inset-0 bg-black/40" />
         <div className="bg-white rounded-2xl p-6 shadow-xl z-10 max-w-sm w-full mx-4 relative">
           <div className="mb-4 flex justify-center">
@@ -283,28 +283,28 @@ export default function TourGuide() {
               <PartyPopper className="w-8 h-8" />
             </div>
           </div>
-          <h3 className="text-xl font-bold mb-2 text-center text-primary">Tur Selesai</h3>
+          <h3 className="text-xl font-bold mb-2 text-center text-primary">Tour Complete</h3>
           <p className="text-gray-600 mb-6 text-center text-sm">
-            {role === "induk" && !punyaCabang
-              ? "Mulai catat transaksi pertama Anda, lalu buka cabang ketika usaha siap berkembang."
-              : "Selamat mengelola usaha. Pindah akun kapan saja lewat menu di pojok kanan atas."}
+            {role === "parent" && !hasBranches
+              ? "Start by recording your first transaction, then open a branch when your business is ready to grow."
+              : "Enjoy running your business. Switch accounts anytime from the menu in the top right corner."}
           </p>
           <button onClick={closeAll} className="w-full px-4 py-3 rounded-xl btn-gradient font-medium">
-            Mulai Gunakan Aplikasi
+            Start Using the App
           </button>
         </div>
-      </Lapisan>
+      </Overlay>
     );
   }
 
-  // posisi sorotan elemen target
+  // highlight position of the target element
   let rect: DOMRect | null = null;
   if (step.selector) {
     const el = document.querySelector(step.selector) as HTMLElement | null;
     if (el) rect = el.getBoundingClientRect();
   }
 
-  // posisi kartu langkah: di bawah target bila target di setengah atas layar, sebaliknya di atas
+  // step card position: below the target if it's in the top half of the screen, otherwise above
   let modalStyle: React.CSSProperties = {
     top: typeof window !== "undefined" ? window.innerHeight - 220 : 0,
     left: typeof window !== "undefined" ? window.innerWidth / 2 : 0,
@@ -312,23 +312,23 @@ export default function TourGuide() {
   };
   if (rect && typeof window !== "undefined") {
     const modalHeight = 230;
-    const atas = rect.top < window.innerHeight / 2;
-    let top = atas ? rect.bottom + 24 : rect.top - modalHeight;
-    // batasi agar tidak keluar layar (terutama untuk elemen setinggi layar seperti sidebar)
+    const above = rect.top < window.innerHeight / 2;
+    let top = above ? rect.bottom + 24 : rect.top - modalHeight;
+    // clamp so it doesn't leave the screen (especially for screen-tall elements like the sidebar)
     top = Math.max(top, 24);
     top = Math.min(top, window.innerHeight - modalHeight - 24);
-    // jaga kartu tetap di dalam layar, berapa pun lebar layarnya (lebar kartu = min(92%, 520px))
-    const setengah = Math.min(window.innerWidth * 0.92, 520) / 2;
+    // keep the card on screen whatever the screen width (card width = min(92%, 520px))
+    const half = Math.min(window.innerWidth * 0.92, 520) / 2;
     let left = rect.left + rect.width / 2;
-    left = Math.max(left, setengah + 8);
-    left = Math.min(left, window.innerWidth - setengah - 8);
+    left = Math.max(left, half + 8);
+    left = Math.min(left, window.innerWidth - half - 8);
     modalStyle = { top, left, transform: "translate(-50%, 0)" };
   }
 
-  const isi = typeof step.body === "function" ? step.body(kondisi) : step.body;
+  const content = typeof step.body === "function" ? step.body(state) : step.body;
 
   return (
-    <Lapisan className="fixed inset-0 z-[1000] pointer-events-none overflow-hidden">
+    <Overlay className="fixed inset-0 z-[1000] pointer-events-none overflow-hidden">
       {!rect && <div className="absolute inset-0 bg-black/40 transition-opacity duration-300" />}
       {rect && (
         <div
@@ -347,17 +347,17 @@ export default function TourGuide() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider text-[#5487ab]">
-                Langkah {stepIndex + 1} dari {STEPS.length}
+                Step {stepIndex + 1} of {STEPS.length}
               </p>
               <h4 className="mt-0.5 text-lg font-bold text-primary">{step.title}</h4>
-              <p className="text-sm text-gray-600 mt-2 leading-relaxed">{isi}</p>
+              <p className="text-sm text-gray-600 mt-2 leading-relaxed">{content}</p>
             </div>
             <button onClick={skip} className="shrink-0 text-sm text-gray-400 hover:text-gray-600 transition-colors px-2 py-1 rounded-md">
-              Lewati
+              Skip
             </button>
           </div>
           <div className="mt-5 pt-4 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
-            {/* titik kemajuan */}
+            {/* progress dots */}
             <div className="hidden sm:flex gap-1.5">
               {STEPS.map((s, i) => (
                 <span key={s.id} className={`h-1.5 rounded-full transition-all ${i === stepIndex ? "w-5 bg-primary" : "w-1.5 bg-[#c6d8e4]"}`} />
@@ -369,18 +369,18 @@ export default function TourGuide() {
                 disabled={stepIndex === 0}
                 className="px-4 py-2 text-sm font-medium rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
-                Sebelumnya
+                Previous
               </button>
               <button
                 onClick={() => (stepIndex === STEPS.length - 1 ? finish() : next())}
                 className="px-4 py-2 text-sm font-medium rounded-xl btn-gradient"
               >
-                {stepIndex === STEPS.length - 1 ? "Selesai" : "Berikutnya"}
+                {stepIndex === STEPS.length - 1 ? "Finish" : "Next"}
               </button>
             </div>
           </div>
         </div>
       </div>
-    </Lapisan>
+    </Overlay>
   );
 }

@@ -18,7 +18,7 @@
   }
 }
 
-/* ---------- Tema kartu "corporate elegant" (uji coba di Beranda) ---------- */
+/* ---------- "Corporate elegant" card theme (trial on Home) ---------- */
 .card-elegant {
   position: relative;
   background: linear-gradient(160deg, #ffffff 0%, #f7fbfe 55%, #eef5fa 100%);
@@ -39,7 +39,7 @@
     0 10px 20px -6px rgba(1, 42, 61, 0.1),
     0 28px 48px -20px rgba(1, 42, 61, 0.3);
 }
-/* garis aksen tipis di atas kartu */
+/* thin accent line above the card */
 .card-elegant::before {
   content: "";
   position: absolute;
@@ -58,7 +58,7 @@
     0 2px 4px rgba(1, 42, 61, 0.12),
     0 22px 40px -18px rgba(1, 42, 61, 0.6),
     inset 0 1px 0 rgba(255, 255, 255, 0.14);
-  /* tilt 3D: --rx/--ry diisi oleh useEfekKursor saat kursor di atas kartu */
+  /* 3D tilt: --rx/--ry are set by useCursorEffect while the cursor is over the card */
   transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--ty, 0px));
   transform-style: preserve-3d;
   will-change: transform;
@@ -66,7 +66,7 @@
     transform 450ms cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
-.card-gradient.tilt-aktif {
+.card-gradient.tilt-active {
   transition:
     transform 90ms linear,
     box-shadow 220ms cubic-bezier(0.16, 1, 0.3, 1);
@@ -78,7 +78,7 @@
     0 30px 52px -20px rgba(1, 42, 61, 0.7),
     inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
-/* kilau cahaya yang mengikuti kursor */
+/* light sheen that follows the cursor */
 .card-gradient::before {
   content: "";
   position: absolute;
@@ -89,10 +89,10 @@
   transition: opacity 300ms ease;
   pointer-events: none;
 }
-.card-gradient.tilt-aktif::before {
+.card-gradient.tilt-active::before {
   opacity: 1;
 }
-/* kilau lembut di pojok kanan atas */
+/* soft sheen in the top right corner */
 .card-gradient::after {
   content: "";
   position: absolute;
@@ -126,14 +126,14 @@
   background: linear-gradient(135deg, #012a3d 0%, #13577d 100%);
   color: #fff;
   box-shadow: 0 8px 18px -10px rgba(1, 42, 61, 0.7);
-  /* efek magnetik: --mx/--my diisi oleh useEfekKursor */
+  /* magnetic effect: --mx/--my are set by useCursorEffect */
   transform: translate(var(--mx, 0px), var(--my, 0px));
   transition:
     transform 250ms cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 200ms ease,
     filter 200ms ease;
 }
-/* kilatan cahaya yang menyapu tombol saat disorot */
+/* light flash sweeping across the button on hover */
 .btn-gradient::after {
   content: "";
   position: absolute;
@@ -151,19 +151,19 @@
   box-shadow: 0 12px 24px -10px rgba(1, 42, 61, 0.75);
 }
 
-/* Sidebar berlatar navy; menu aktif kebalikannya: latar putih, teks navy */
-.sidebar-gelap {
+/* Navy sidebar; the active menu is the inverse: white background, navy text */
+.sidebar-dark {
   background:
     radial-gradient(420px 260px at 0% 0%, rgba(84, 135, 171, 0.22), transparent 70%),
     linear-gradient(180deg, #012a3d 0%, #0a3f5e 60%, #13577d 100%);
   box-shadow: 8px 0 30px -18px rgba(1, 42, 61, 0.6);
 }
-/* Scrollbar menu sidebar: tipis, tanpa jalur, muncul jelas saat kursor di atas menu */
+/* Sidebar menu scrollbar: thin, no track, clearly visible when hovering the menu */
 .sidebar-scroll {
   scrollbar-width: thin; /* Firefox */
   scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
   scrollbar-gutter: stable;
-  /* tepi atas & bawah memudar sebagai isyarat masih ada menu yang bisa digulir */
+  /* top & bottom edges fade to hint there are more menu items to scroll */
   -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 18px), transparent 100%);
   mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 18px), transparent 100%);
   padding-top: 6px;
@@ -197,7 +197,7 @@
   background-color: rgba(255, 255, 255, 0.65);
   border-width: 0;
 }
-.indikator-aktif-terang {
+.active-indicator-light {
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -207,9 +207,9 @@
     inset 0 0 0 1px rgba(255, 255, 255, 0.6);
 }
 
-/* Latar menu/tab aktif yang bergeser (sidebar & tab pil). Sengaja tidak
-   memakai .btn-gradient karena kelas itu memaksa position: relative. */
-.indikator-aktif {
+/* Sliding background for the active menu/tab (sidebar & pill tabs). Intentionally
+   not using .btn-gradient because that class forces position: relative. */
+.active-indicator {
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -219,8 +219,8 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-/* ---------- Latar mesh gradient yang bergerak pelan ---------- */
-.latar-mesh {
+/* ---------- Slowly moving mesh gradient background ---------- */
+.mesh-bg {
   position: fixed;
   inset: 0;
   z-index: -1;
@@ -231,21 +231,21 @@
     radial-gradient(800px 500px at 100% 100%, rgba(207, 224, 238, 0.8), transparent 60%),
     var(--bg-bright);
 }
-.latar-mesh span {
+.mesh-bg span {
   position: absolute;
   border-radius: 9999px;
   filter: blur(80px);
   opacity: 0.35;
-  animation: mesh-gerak 22s ease-in-out infinite;
+  animation: mesh-drift 22s ease-in-out infinite;
 }
-.latar-mesh span:nth-child(1) {
+.mesh-bg span:nth-child(1) {
   width: 520px;
   height: 520px;
   background: #9cb2c1;
   top: -160px;
   left: 18%;
 }
-.latar-mesh span:nth-child(2) {
+.mesh-bg span:nth-child(2) {
   width: 460px;
   height: 460px;
   background: #5487ab;
@@ -254,7 +254,7 @@
   animation-delay: -8s;
   opacity: 0.22;
 }
-.latar-mesh span:nth-child(3) {
+.mesh-bg span:nth-child(3) {
   width: 380px;
   height: 380px;
   background: #7193ad;
@@ -263,7 +263,7 @@
   animation-delay: -15s;
   opacity: 0.14;
 }
-@keyframes mesh-gerak {
+@keyframes mesh-drift {
   0%,
   100% {
     transform: translate(0, 0) scale(1);
@@ -276,11 +276,11 @@
   }
 }
 
-/* ---------- Kartu muncul bergantian saat halaman dibuka ---------- */
-/* fill-mode "backwards" supaya setelah animasi selesai transform kartu
-   kembali dikendalikan oleh hover/tilt */
+/* ---------- Cards appear one after another when the page opens ---------- */
+/* fill-mode "backwards" so that once the animation ends the card transform
+   is controlled by hover/tilt again */
 main :is(.card-elegant, .card-gradient) {
-  animation: kartu-masuk 600ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation: card-in 600ms cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 main :is(.card-elegant, .card-gradient):nth-child(2) {
   animation-delay: 60ms;
@@ -297,7 +297,7 @@ main :is(.card-elegant, .card-gradient):nth-child(5) {
 main :is(.card-elegant, .card-gradient):nth-child(n + 6) {
   animation-delay: 300ms;
 }
-@keyframes kartu-masuk {
+@keyframes card-in {
   from {
     opacity: 0;
     transform: translateY(18px) scale(0.985);
@@ -329,7 +329,7 @@ main :is(.card-elegant, .card-gradient):nth-child(n + 6) {
   }
 }
 
-/* ---------- Animasi halaman login ---------- */
+/* ---------- Login page animations ---------- */
 .login-bg {
   background:
     radial-gradient(1200px 600px at 10% -10%, #d6e7f3 0%, transparent 60%),
@@ -429,7 +429,7 @@ main :is(.card-elegant, .card-gradient):nth-child(n + 6) {
   animation: fade-up 0.3s ease-out both;
 }
 @media (prefers-reduced-motion: reduce) {
-  .latar-mesh span,
+  .mesh-bg span,
   main .card-elegant,
   main .card-gradient,
   .shimmer::after,
@@ -476,27 +476,27 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* ---------- Ilustrasi 3D ubin scan struk (CSS 3D) ---------- */
-.ilus-3d {
+/* ---------- 3D receipt scan tile illustration (CSS 3D) ---------- */
+.illus-3d {
   position: relative;
   width: 120px;
   height: 110px;
   perspective: 600px;
   pointer-events: none;
 }
-.ilus-putar {
+.illus-spin {
   position: absolute;
   inset: 0;
   transform-style: preserve-3d;
   transform: rotateX(16deg) rotateY(-24deg) rotateZ(4deg);
-  animation: ilus-melayang 4.5s ease-in-out infinite;
+  animation: illus-float 4.5s ease-in-out infinite;
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.group:hover .ilus-putar {
+.group:hover .illus-spin {
   animation-play-state: paused;
   transform: rotateX(8deg) rotateY(-6deg) rotateZ(0deg) translateY(-6px);
 }
-@keyframes ilus-melayang {
+@keyframes illus-float {
   0%,
   100% {
     transform: rotateX(16deg) rotateY(-24deg) rotateZ(4deg) translateY(0);
@@ -506,8 +506,8 @@ body {
   }
 }
 
-/* kertas struk dengan gerigi di bawah */
-.ilus-struk {
+/* receipt paper with a jagged bottom edge */
+.illus-receipt {
   position: absolute;
   left: 14px;
   top: 4px;
@@ -523,41 +523,41 @@ body {
   -webkit-mask: radial-gradient(circle 4px at 50% 100%, transparent 98%, #000) 0 0 / 9px 100%;
   mask: radial-gradient(circle 4px at 50% 100%, transparent 98%, #000) 0 0 / 9px 100%;
 }
-.ilus-struk-kepala {
+.illus-receipt-header {
   width: 60%;
   height: 7px;
   margin: 0 auto 7px;
   border-radius: 9999px;
   background: #012a3d;
 }
-.ilus-baris {
+.illus-row {
   height: 4px;
   margin-bottom: 5px;
   border-radius: 9999px;
   background: #c6d8e4;
 }
-.ilus-struk-total {
+.illus-receipt-total {
   display: flex;
   justify-content: space-between;
   margin-top: 8px;
   padding-top: 6px;
   border-top: 1.5px dashed #9cb2c1;
 }
-.ilus-struk-total span {
+.illus-receipt-total span {
   height: 5px;
   border-radius: 9999px;
   background: #2f6b8f;
 }
-.ilus-struk-total span:first-child {
+.illus-receipt-total span:first-child {
   width: 34%;
 }
-.ilus-struk-total span:last-child {
+.illus-receipt-total span:last-child {
   width: 26%;
   background: #012a3d;
 }
 
-/* tumpukan koin */
-.ilus-koin {
+/* stack of coins */
+.illus-coin {
   position: absolute;
   right: 6px;
   bottom: 14px;
@@ -565,7 +565,7 @@ body {
   height: 44px;
   transform: translateZ(34px);
 }
-.ilus-koin span {
+.illus-coin span {
   position: absolute;
   left: 0;
   bottom: 0;
@@ -577,10 +577,10 @@ body {
     0 2px 0 #5487ab,
     0 6px 10px -4px rgba(1, 42, 61, 0.5);
 }
-.ilus-koin span:last-child {
+.illus-coin span:last-child {
   background: radial-gradient(ellipse at 40% 35%, #ffffff 0%, #c6d8e4 70%);
 }
-.ilus-koin b {
+.illus-coin b {
   position: absolute;
   left: 0;
   right: 0;
@@ -590,8 +590,8 @@ body {
   color: #0a3f5e;
 }
 
-/* kotak kardus (kubus 36px) */
-.ilus-kotak {
+/* cardboard box (36px cube) */
+.illus-box {
   --s: 36px;
   position: absolute;
   right: 12px;
@@ -601,41 +601,41 @@ body {
   transform-style: preserve-3d;
   transform: translateZ(30px) rotateX(-18deg) rotateY(32deg);
 }
-.ilus-kotak span {
+.illus-box span {
   position: absolute;
   inset: 0;
   border-radius: 3px;
   background: linear-gradient(135deg, #2f6b8f, #13577d);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15);
 }
-.ilus-kotak .depan {
+.illus-box .front {
   transform: translateZ(calc(var(--s) / 2));
   background:
     linear-gradient(90deg, transparent 44%, rgba(255, 255, 255, 0.35) 44% 56%, transparent 56%),
     linear-gradient(135deg, #5487ab, #2f6b8f);
 }
-.ilus-kotak .belakang {
+.illus-box .back {
   transform: rotateY(180deg) translateZ(calc(var(--s) / 2));
 }
-.ilus-kotak .kanan {
+.illus-box .right {
   transform: rotateY(90deg) translateZ(calc(var(--s) / 2));
   background: linear-gradient(135deg, #13577d, #0a3f5e);
 }
-.ilus-kotak .kiri {
+.illus-box .left {
   transform: rotateY(-90deg) translateZ(calc(var(--s) / 2));
 }
-.ilus-kotak .atas {
+.illus-box .top {
   transform: rotateX(90deg) translateZ(calc(var(--s) / 2));
   background:
     linear-gradient(90deg, transparent 44%, rgba(255, 255, 255, 0.45) 44% 56%, transparent 56%),
     linear-gradient(135deg, #9cb2c1, #7193ad);
 }
-.ilus-kotak .bawah {
+.illus-box .bottom {
   transform: rotateX(-90deg) translateZ(calc(var(--s) / 2));
 }
 
-/* bayangan lantai */
-.ilus-bayangan {
+/* floor shadow */
+.illus-shadow {
   position: absolute;
   left: 18px;
   right: 10px;
@@ -643,12 +643,12 @@ body {
   height: 12px;
   border-radius: 50%;
   background: radial-gradient(ellipse, rgba(1, 42, 61, 0.28), transparent 70%);
-  animation: ilus-bayangan 4.5s ease-in-out infinite;
+  animation: illus-shadow 4.5s ease-in-out infinite;
 }
-.ilus-gelap .ilus-bayangan {
+.illus-dark .illus-shadow {
   background: radial-gradient(ellipse, rgba(0, 0, 0, 0.35), transparent 70%);
 }
-@keyframes ilus-bayangan {
+@keyframes illus-shadow {
   0%,
   100% {
     transform: scaleX(1);
@@ -661,62 +661,62 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ilus-putar,
-  .ilus-bayangan {
+  .illus-spin,
+  .illus-shadow {
     animation: none;
   }
 }
 
-/* Versi untuk ubin berlatar putih (pembelian): warna objek dibalik agar kontras */
-.ilus-3d:not(.ilus-gelap) .ilus-struk {
+/* Version for white-background tiles (purchases): object colors inverted for contrast */
+.illus-3d:not(.illus-dark) .illus-receipt {
   background: linear-gradient(180deg, #13577d 0%, #012a3d 100%);
   box-shadow:
     0 14px 22px -10px rgba(1, 42, 61, 0.6),
     inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
-.ilus-3d:not(.ilus-gelap) .ilus-struk-kepala {
+.illus-3d:not(.illus-dark) .illus-receipt-header {
   background: #ffffff;
 }
-.ilus-3d:not(.ilus-gelap) .ilus-baris {
+.illus-3d:not(.illus-dark) .illus-row {
   background: rgba(198, 216, 228, 0.45);
 }
-.ilus-3d:not(.ilus-gelap) .ilus-struk-total {
+.illus-3d:not(.illus-dark) .illus-receipt-total {
   border-top-color: rgba(156, 178, 193, 0.6);
 }
-.ilus-3d:not(.ilus-gelap) .ilus-struk-total span {
+.illus-3d:not(.illus-dark) .illus-receipt-total span {
   background: #9cb2c1;
 }
-.ilus-3d:not(.ilus-gelap) .ilus-struk-total span:last-child {
+.illus-3d:not(.illus-dark) .illus-receipt-total span:last-child {
   background: #ffffff;
 }
-/* kotak lebih terang supaya terbedakan dari struk yang kini gelap */
-.ilus-3d:not(.ilus-gelap) .ilus-kotak span {
+/* lighter box so it stands out from the now-dark receipt */
+.illus-3d:not(.illus-dark) .illus-box span {
   background: linear-gradient(135deg, #9cb2c1, #7193ad);
   box-shadow: inset 0 0 0 1px rgba(1, 42, 61, 0.12);
 }
-.ilus-3d:not(.ilus-gelap) .ilus-kotak .depan {
+.illus-3d:not(.illus-dark) .illus-box .front {
   background:
     linear-gradient(90deg, transparent 44%, rgba(1, 42, 61, 0.25) 44% 56%, transparent 56%),
     linear-gradient(135deg, #c6d8e4, #9cb2c1);
 }
-.ilus-3d:not(.ilus-gelap) .ilus-kotak .kanan {
+.illus-3d:not(.illus-dark) .illus-box .right {
   background: linear-gradient(135deg, #7193ad, #5487ab);
 }
-.ilus-3d:not(.ilus-gelap) .ilus-kotak .atas {
+.illus-3d:not(.illus-dark) .illus-box .top {
   background:
     linear-gradient(90deg, transparent 44%, rgba(1, 42, 61, 0.3) 44% 56%, transparent 56%),
     linear-gradient(135deg, #e1ecf3, #c6d8e4);
 }
-.ilus-3d:not(.ilus-gelap) .ilus-bayangan {
+.illus-3d:not(.illus-dark) .illus-shadow {
   background: radial-gradient(ellipse, rgba(1, 42, 61, 0.35), transparent 70%);
 }
 
-/* ---------- Panel notifikasi ---------- */
+/* ---------- Notification panel ---------- */
 .notif-panel {
   transform-origin: top right;
-  animation: notif-masuk 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: notif-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
-@keyframes notif-masuk {
+@keyframes notif-in {
   from {
     opacity: 0;
     transform: translateY(-6px) scale(0.97);
@@ -737,12 +737,12 @@ body {
   border-radius: 9999px;
   background: rgba(1, 42, 61, 0.15);
 }
-/* lonceng bergoyang sesekali bila ada notifikasi belum dibaca */
-.lonceng-goyang {
+/* bell shakes occasionally when there are unread notifications */
+.bell-shake {
   transform-origin: top center;
-  animation: lonceng 4s ease-in-out infinite;
+  animation: bell-ring 4s ease-in-out infinite;
 }
-@keyframes lonceng {
+@keyframes bell-ring {
   0%,
   86%,
   100% {
@@ -763,19 +763,19 @@ body {
 }
 @media (prefers-reduced-motion: reduce) {
   .notif-panel,
-  .lonceng-goyang {
+  .bell-shake {
     animation: none;
   }
 }
 
-/* Notifikasi bergaya notifikasi sistem (unduhan selesai) */
-.notif-sistem {
-  animation: notif-sistem-masuk 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+/* System-style notification (download finished) */
+.system-notice {
+  animation: system-notice-in 0.45s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.notif-sistem-keluar {
-  animation: notif-sistem-keluar 0.32s ease-in forwards;
+.system-notice-exit {
+  animation: system-notice-exit 0.32s ease-in forwards;
 }
-@keyframes notif-sistem-masuk {
+@keyframes system-notice-in {
   from {
     opacity: 0;
     transform: translateX(110%);
@@ -785,15 +785,15 @@ body {
     transform: none;
   }
 }
-@keyframes notif-sistem-keluar {
+@keyframes system-notice-exit {
   to {
     opacity: 0;
     transform: translateX(110%);
   }
 }
 @media (prefers-reduced-motion: reduce) {
-  .notif-sistem,
-  .notif-sistem-keluar {
+  .system-notice,
+  .system-notice-exit {
     animation: none;
   }
 }

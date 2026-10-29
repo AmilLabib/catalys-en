@@ -7,67 +7,67 @@ import { usePageTitle } from "../hooks/usePageTitle";
 import { useAccount } from "../context/AccountContext";
 import { useBusinessSector } from "../context/BusinessSectorContext";
 import PillTabs from "../components/PillTabs";
-import { INTERNAL_TAB_PLAN, PLAN_LABEL, lockedMessage, pesanPeran, planAtLeast } from "../config/access";
-import TabInventaris from "./internal/TabInventaris";
-import TabPenggajian from "./internal/TabPenggajian";
-import TabPemasaran from "./internal/TabPemasaran";
+import { INTERNAL_TAB_PLAN, PLAN_LABEL, lockedMessage, roleMessage, planAtLeast } from "../config/access";
+import InventoryTab from "./internal/InventoryTab";
+import PayrollTab from "./internal/PayrollTab";
+import MarketingTab from "./internal/MarketingTab";
 
-const SEMUA_TAB = [
-  { key: "inventaris", label: "Persediaan", icon: Boxes },
-  { key: "penggajian", label: "Sumber Daya", icon: Users },
-  { key: "pemasaran", label: "Pemasaran", icon: Megaphone },
+const ALL_TABS = [
+  { key: "inventory", label: "Stock", icon: Boxes },
+  { key: "payroll", label: "Human Resources", icon: Users },
+  { key: "marketing", label: "Marketing", icon: Megaphone },
 ] as const;
 
-type TabKey = (typeof SEMUA_TAB)[number]["key"];
+type TabKey = (typeof ALL_TABS)[number]["key"];
 
 export default function InternalManagement() {
-  usePageTitle("Manajemen Internal");
-  const { role, plan, pindahAkun } = useAccount();
+  usePageTitle("Internal Management");
+  const { role, plan, switchAccount } = useAccount();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const [tabTerkunci, setTabTerkunci] = useState<TabKey | null>(null);
+  const [lockedTab, setLockedTab] = useState<TabKey | null>(null);
   const { sector } = useBusinessSector();
   const [params, setParams] = useSearchParams();
-  // Akun cabang hanya mengelola persediaannya sendiri; tab lain juga dibuka bertahap per paket
-  const kunciPeran = (k: TabKey) => role === "cabang" && k !== "inventaris";
-  const tabs = SEMUA_TAB.map((t) => ({
+  // Branch accounts only manage their own stock; other tabs also unlock gradually per plan
+  const roleLocked = (k: TabKey) => role === "branch" && k !== "inventory";
+  const tabs = ALL_TABS.map((t) => ({
     ...t,
-    terkunci: kunciPeran(t.key)
-      ? pesanPeran(["induk"])
+    locked: roleLocked(t.key)
+      ? roleMessage(["parent"])
       : !planAtLeast(plan, INTERNAL_TAB_PLAN[t.key])
         ? lockedMessage(INTERNAL_TAB_PLAN[t.key])
         : undefined,
   }));
-  const labelTerkunci = SEMUA_TAB.find((t) => t.key === tabTerkunci)?.label ?? "";
-  const minta = params.get("tab") as TabKey | null;
-  const aktif: TabKey = tabs.some((t) => t.key === minta && !t.terkunci) ? minta! : "inventaris";
+  const lockedLabel = ALL_TABS.find((t) => t.key === lockedTab)?.label ?? "";
+  const requested = params.get("tab") as TabKey | null;
+  const active: TabKey = tabs.some((t) => t.key === requested && !t.locked) ? requested! : "inventory";
 
   return (
     <div className="max-w-[80rem] mx-auto">
       <p className="text-sm text-gray-600 mb-4">
-        Operasional harian bisnis: persediaan bahan baku dan supplier, sumber daya manusia dan penggajian, serta pemantauan ulasan pelanggan di media sosial dan e-commerce.
+        Daily business operations: raw material stock and suppliers, human resources and payroll, and monitoring customer reviews on social media and e-commerce.
       </p>
-      <PillTabs tabs={tabs} active={aktif} onChange={(k) => setParams({ tab: k })} onTerkunci={setTabTerkunci} className="mb-6" />
-      <Modal isOpen={!!tabTerkunci} onClose={() => setTabTerkunci(null)} title={labelTerkunci}>
-        {tabTerkunci && !kunciPeran(tabTerkunci) ? (
+      <PillTabs tabs={tabs} active={active} onChange={(k) => setParams({ tab: k })} onLocked={setLockedTab} className="mb-6" />
+      <Modal isOpen={!!lockedTab} onClose={() => setLockedTab(null)} title={lockedLabel}>
+        {lockedTab && !roleLocked(lockedTab) ? (
           <div className="text-center">
             <div className="mx-auto w-14 h-14 rounded-2xl chip-gradient flex items-center justify-center">
               <Crown className="w-6 h-6" />
             </div>
             <h3 className="mt-3 text-lg font-bold text-primary">
-              {labelTerkunci} belum termasuk paket {PLAN_LABEL[plan]}
+              {lockedLabel} isn't included in the {PLAN_LABEL[plan]} plan
             </h3>
             <p className="mt-1 text-sm text-gray-600">
-              {lockedMessage(INTERNAL_TAB_PLAN[tabTerkunci])}. Upgrade langganan untuk membukanya di seluruh usaha.
+              {lockedMessage(INTERNAL_TAB_PLAN[lockedTab])}. Upgrade your subscription to unlock it across the whole business.
             </p>
             <button
               onClick={() => {
-                setTabTerkunci(null);
-                navigate("/profil?tab=paket");
+                setLockedTab(null);
+                navigate("/profile?tab=plans");
               }}
               className="mt-4 btn-gradient w-full inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold"
             >
-              <Crown className="w-4 h-4" /> Lihat & Upgrade Paket
+              <Crown className="w-4 h-4" /> View & Upgrade Plan
             </button>
           </div>
         ) : (
@@ -75,28 +75,28 @@ export default function InternalManagement() {
             <div className="mx-auto w-14 h-14 rounded-2xl chip-gradient flex items-center justify-center">
               <Lock className="w-6 h-6" />
             </div>
-            <h3 className="mt-3 text-lg font-bold text-primary">Fitur khusus akun Induk</h3>
+            <h3 className="mt-3 text-lg font-bold text-primary">Parent account feature</h3>
             <p className="mt-1 text-sm text-gray-600">
-              Akun cabang hanya mengelola persediaannya sendiri. Sumber daya dan pemasaran dikelola terpusat oleh akun Induk.
+              Branch accounts only manage their own stock. Human resources and marketing are managed centrally by the Parent account.
             </p>
             <button
               onClick={() => {
-                const t = tabTerkunci;
-                setTabTerkunci(null);
-                pindahAkun("induk");
-                toast("Sekarang di akun Induk", "info");
+                const t = lockedTab;
+                setLockedTab(null);
+                switchAccount("parent");
+                toast("Now on the Parent account", "info");
                 if (t) setParams({ tab: t });
               }}
               className="mt-4 btn-gradient w-full inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold"
             >
-              <Building2 className="w-4 h-4" /> Pindah ke akun Induk
+              <Building2 className="w-4 h-4" /> Switch to Parent account
             </button>
           </div>
         )}
       </Modal>
-      {aktif === "inventaris" && <TabInventaris key={sector} />}
-      {aktif === "penggajian" && <TabPenggajian key={sector} />}
-      {aktif === "pemasaran" && <TabPemasaran />}
+      {active === "inventory" && <InventoryTab key={sector} />}
+      {active === "payroll" && <PayrollTab key={sector} />}
+      {active === "marketing" && <MarketingTab />}
     </div>
   );
 }

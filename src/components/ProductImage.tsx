@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-// Gambar produk dengan cadangan berupa inisial jika foto tidak ada / gagal dimuat.
+// Product image that falls back to initials when there is no photo or it fails to load.
 export default function ProductImage({
   src,
   name,
@@ -10,9 +10,9 @@ export default function ProductImage({
   name: string;
   className?: string;
 }) {
-  const [gagal, setGagal] = useState(false);
-  if (!src || gagal) {
-    const inisial = name
+  const [failed, setFailed] = useState(false);
+  if (!src || failed) {
+    const initials = name
       .split(" ")
       .filter(Boolean)
       .slice(0, 2)
@@ -24,9 +24,9 @@ export default function ProductImage({
         className={`flex items-center justify-center bg-gradient-to-br from-[#e1ecf3] to-[#9cb2c1] text-primary font-bold ${className}`}
         aria-label={name}
       >
-        <span className="text-lg">{inisial}</span>
+        <span className="text-lg">{initials}</span>
       </div>
     );
   }
-  return <img src={src} alt={name} onError={() => setGagal(true)} className={`object-cover ${className}`} />;
+  return <img src={src} alt={name} onError={() => setFailed(true)} className={`object-cover ${className}`} />;
 }

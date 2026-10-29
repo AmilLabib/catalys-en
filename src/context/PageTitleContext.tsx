@@ -15,7 +15,7 @@ type PageTitleContextValue = {
 const PageTitleContext = createContext<PageTitleContextValue | null>(null);
 
 export function PageTitleProvider({ children }: { children: ReactNode }) {
-  const [title, setTitleState] = useState("Beranda");
+  const [title, setTitleState] = useState("Home");
 
   const setTitle = useCallback((next: string) => {
     setTitleState(next);

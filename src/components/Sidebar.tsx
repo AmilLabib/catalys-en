@@ -19,7 +19,7 @@ import {
   Tag,
 } from "lucide-react";
 import { useAccount } from "../context/AccountContext";
-import { useAkses } from "../context/AksesContext";
+import { useAccess } from "../context/AccessContext";
 import { FEATURES, type FeatureKey } from "../config/access";
 
 type Props = {
@@ -29,31 +29,31 @@ type Props = {
 
 const GROUPS: { title: string; items: { key: FeatureKey; icon: typeof Home }[] }[] = [
   {
-    title: "Ringkasan",
-    items: [{ key: "beranda", icon: Home }],
+    title: "Overview",
+    items: [{ key: "home", icon: Home }],
   },
   {
-    title: "Operasional",
+    title: "Operations",
     items: [
-      { key: "kasir", icon: ShoppingCart },
-      { key: "hargaCerdas", icon: Tag },
-      { key: "manajemenInternal", icon: Factory },
+      { key: "cashier", icon: ShoppingCart },
+      { key: "smartPricing", icon: Tag },
+      { key: "internalManagement", icon: Factory },
     ],
   },
   {
-    title: "Keuangan",
+    title: "Finance",
     items: [
-      { key: "baganAkun", icon: BookOpen },
-      { key: "laporanKeuangan", icon: BarChart2 },
+      { key: "chartOfAccounts", icon: BookOpen },
+      { key: "financialReports", icon: BarChart2 },
       { key: "audit", icon: AlertTriangle },
     ],
   },
   {
-    title: "Pertumbuhan",
+    title: "Growth",
     items: [
-      { key: "konsultasi", icon: MessagesSquare },
-      { key: "umkmBerkembang", icon: Trophy },
-      { key: "permodalan", icon: ShieldCheck },
+      { key: "consultation", icon: MessagesSquare },
+      { key: "msmeGrowth", icon: Trophy },
+      { key: "funding", icon: ShieldCheck },
     ],
   },
 ];
@@ -62,13 +62,13 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
-  const { alasanTerkunci } = useAccount();
-  const { tampilkanAkses } = useAkses();
+  const { lockReason } = useAccount();
+  const { showAccess } = useAccess();
 
-  function item(key: FeatureKey, Icon: typeof Home, compact: boolean, indikator: string) {
+  function item(key: FeatureKey, Icon: typeof Home, compact: boolean, indicator: string) {
     const def = FEATURES[key];
     const active = pathname === def.path;
-    const kunci = alasanTerkunci(key);
+    const lock = lockReason(key);
     const base = `group relative flex items-center gap-3 py-2.5 px-3 rounded-lg text-sm font-medium transition-colors duration-200 ${
       compact ? "justify-center" : "justify-start"
     }`;
@@ -84,14 +84,14 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
       </span>
     );
 
-    // fitur di luar akun/paket tetap tampil normal; klik memunculkan popup penjelasan
-    if (kunci) {
+    // features outside the account/plan still render normally; clicking shows an explanation popup
+    if (lock) {
       return (
         <button
           key={key}
           type="button"
-          onClick={() => tampilkanAkses(key)}
-          title={kunci.pesan}
+          onClick={() => showAccess(key)}
+          title={lock.message}
           className={`${base} w-full text-white/75 hover:bg-white/10 hover:text-white`}
         >
           <Icon className="relative w-5 h-5 flex-shrink-0" />
@@ -111,11 +111,11 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
         to={def.path}
         className={`${base} ${active ? "text-primary font-semibold" : "text-white/75 hover:bg-white/10 hover:text-white"}`}
       >
-        {/* latar menu aktif bergeser halus antar menu (shared layout animation) */}
+        {/* the active menu background slides smoothly between menus (shared layout animation) */}
         {active && (
           <motion.span
-            layoutId={indikator}
-            className="indikator-aktif-terang rounded-lg"
+            layoutId={indicator}
+            className="active-indicator-light rounded-lg"
             transition={{ type: "spring", stiffness: 420, damping: 34 }}
           />
         )}
@@ -125,9 +125,9 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
     );
   }
 
-  function nav(compact: boolean, indikator: string) {
+  function nav(compact: boolean, indicator: string) {
     return GROUPS.map((g) => {
-      // semua menu tetap tampil; yang di luar peran/paket tampil abu-abu
+      // every menu stays visible; ones outside the role/plan show a lock
       const visible = g.items;
       return (
         <div key={g.title}>
@@ -139,7 +139,7 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
             {g.title}
           </p>
           <div className="space-y-1">
-            {visible.map((i) => item(i.key, i.icon, compact, indikator))}
+            {visible.map((i) => item(i.key, i.icon, compact, indicator))}
           </div>
         </div>
       );
@@ -147,17 +147,17 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
   }
 
   function bottom(compact: boolean) {
-    const profilActive = pathname === "/profil";
+    const profileActive = pathname === "/profile";
     return (
       <div className="mt-4 pt-4 border-t border-white/15 space-y-1">
         <Link
-          to="/profil"
+          to="/profile"
           className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm ${
-            profilActive ? "bg-white text-primary font-semibold shadow-md" : "text-white/75 hover:bg-white/10 hover:text-white"
+            profileActive ? "bg-white text-primary font-semibold shadow-md" : "text-white/75 hover:bg-white/10 hover:text-white"
           } ${compact ? "justify-center" : ""}`}
         >
           <User2 className="w-4 h-4" />
-          {!compact && <span>Profil</span>}
+          {!compact && <span>Profile</span>}
         </Link>
         <button
           onClick={() => navigate("/")}
@@ -166,7 +166,7 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
           }`}
         >
           <LogOut className="w-4 h-4" />
-          {!compact && <span>Keluar</span>}
+          {!compact && <span>Sign out</span>}
         </button>
       </div>
     );
@@ -176,7 +176,7 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
     <>
       {/* Sidebar desktop */}
       <aside
-        className={`sidebar-root sidebar-gelap hidden md:flex flex-col h-screen sticky top-0 px-4 py-4 transition-all duration-300 ease-in-out ${
+        className={`sidebar-root sidebar-dark hidden md:flex flex-col h-screen sticky top-0 px-4 py-4 transition-all duration-300 ease-in-out ${
           collapsed ? "w-20" : "w-64"
         }`}
       >
@@ -201,7 +201,7 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
 
           <button
             onClick={() => setCollapsed((s) => !s)}
-            aria-label={collapsed ? "Buka sidebar" : "Ciutkan sidebar"}
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
             className="p-1.5 rounded-md text-white/80 hover:bg-white/10 hover:text-white"
           >
             {collapsed ? <Menu className="w-4 h-4" /> : <X className="w-4 h-4" />}
@@ -210,7 +210,7 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
 
 
         <nav className="sidebar-scroll flex-1 space-y-5 overflow-y-auto -mr-2 pr-1">
-          {nav(collapsed, "aktif-desktop")}
+          {nav(collapsed, "active-desktop")}
         </nav>
 
         {bottom(collapsed)}
@@ -220,7 +220,7 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
       {mobileOpen && (
         <div className="md:hidden fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-          <div className="sidebar-gelap absolute left-0 top-0 h-full w-72 p-4 shadow-lg flex flex-col">
+          <div className="sidebar-dark absolute left-0 top-0 h-full w-72 p-4 shadow-lg flex flex-col">
             <div className="flex items-center justify-between mb-4">
               <img src="/logo-white.png" alt="logo" className="w-10" />
               <button onClick={onClose} className="p-1 rounded text-white/80 hover:bg-white/10">
@@ -228,7 +228,7 @@ export default function Sidebar({ mobileOpen = false, onClose }: Props) {
               </button>
             </div>
             <nav className="sidebar-scroll flex-1 space-y-5 overflow-y-auto -mr-2 pr-1" onClick={onClose}>
-              {nav(false, "aktif-mobile")}
+              {nav(false, "active-mobile")}
             </nav>
             <div onClick={onClose}>{bottom(false)}</div>
           </div>

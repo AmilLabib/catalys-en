@@ -5,23 +5,23 @@ import { Outlet, useLocation } from "react-router-dom";
 import { useState } from "react";
 import { motion, MotionConfig } from "motion/react";
 import TourGuide from "../components/TourGuide";
-import { useEfekKursor } from "../hooks/useEfekKursor";
-import { AksesProvider } from "../context/AksesContext";
+import { useCursorEffect } from "../hooks/useCursorEffect";
+import { AccessProvider } from "../context/AccessContext";
 import { useAccount } from "../context/AccountContext";
 
 export default function MainLayout() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { pathname } = useLocation();
-  const { akun } = useAccount();
-  useEfekKursor();
+  const { account } = useAccount();
+  useCursorEffect();
 
   return (
-    // reducedMotion="user": animasi motion otomatis diredam bila pengguna memilih "kurangi gerakan"
+    // reducedMotion="user": motion animations are automatically toned down when the user chooses "reduce motion"
     <MotionConfig reducedMotion="user">
-      <AksesProvider>
+      <AccessProvider>
       <div className="min-h-screen flex relative">
-        {/* Latar mesh gradient bergerak pelan */}
-        <div className="latar-mesh" aria-hidden>
+        {/* Slowly moving mesh gradient background */}
+        <div className="mesh-bg" aria-hidden>
           <span />
           <span />
           <span />
@@ -32,10 +32,10 @@ export default function MainLayout() {
         <div className="flex-1 flex flex-col min-w-0">
           <Navbar onMobileMenu={() => setMobileOpen(true)} />
           <main className="px-4 md:px-8 py-6 max-w-[90rem] w-full mx-auto relative">
-            {/* transisi halaman: setiap ganti rute, konten masuk dengan fade + geser halus */}
+            {/* page transition: on every route change, content enters with a fade + gentle slide */}
             <motion.div
-              // halaman dipasang ulang saat pindah akun agar pilihan/filter akun lama tidak terbawa
-              key={`${pathname}::${akun}`}
+              // the page remounts when switching accounts so the old account's selections/filters don't carry over
+              key={`${pathname}::${account}`}
               initial={{ opacity: 0, y: 14, filter: "blur(4px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
@@ -48,7 +48,7 @@ export default function MainLayout() {
         <ClaudeChatBubble />
         <TourGuide />
       </div>
-      </AksesProvider>
+      </AccessProvider>
     </MotionConfig>
   );
 }
